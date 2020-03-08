@@ -62,27 +62,25 @@ class TripAdvisorScrapper(Scrapper):
     @staticmethod
     def crawler(base_url):
         hotels = []
-        scarpper = TripAdvisorScrapper(base_url)
-        root_url = scarpper.root_url
-        data = scarpper.process_one_page()
-        print("Crawling first url")
-        hotels += data.get("hotels")
-        current_page = data.get("current_page")
-        page_max = data.get("total_page")
-        next_url = data.get("next_link")
-        print("total pages: {}".format(page_max))
+        next_url = "undefined"
+        url = base_url
+        print("Crawling starts")
 
         while next_url is not None:
-            url = root_url + next_url
-            print("Crawling Page {}/{}. Url : '{}'".format(current_page + 1, page_max, url))
-            TripAdvisorScrapper.save_updates(hotels, current_page)
-            data = TripAdvisorScrapper(url).process_one_page()
+            scrapper = TripAdvisorScrapper(url)
+            root_url = scrapper.root_url
+
+            data = scrapper.process_one_page()
 
             hotels += data.get("hotels")
             current_page = data.get("current_page")
-            next_url = data.get("next_url")
+            page_max = data.get("total_page")
+            next_url = data.get("next_link")
 
-            TripAdvisorScrapper.save_updates(hotels, current_page + 1)
+            TripAdvisorScrapper.save_updates(hotels, current_page)
+            print("Crawled Page {}/{}. Url : '{}'".format(current_page, page_max, url))
+
+            url = root_url + next_url
             print(f"Current number of hotels found : {len(hotels)}")
 
         return hotels
