@@ -51,7 +51,6 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 cover/
-.idea/
 
 # Translations
 *.mo
@@ -134,3 +133,7 @@ dmypy.json
 
 # pytype static type analyzer
 .pytype/
+
+# project
+.idea/
+saves/save_*

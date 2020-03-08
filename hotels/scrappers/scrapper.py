@@ -5,7 +5,9 @@ from hotels.proxy_pool import ProxyPool
 
 
 class Scrapper:
-    headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
+    timeout = 20
 
     def __init__(self, url, proxies=None):
         print("Scrapper initialised with url `{}`".format(url))
@@ -24,7 +26,7 @@ class Scrapper:
         :return: None
         """
         if self.proxies is None:
-            self.page = requests.get(self.url, headers=self.headers)
+            self.page = requests.get(self.url, headers=self.headers, timeout=self.timeout)
         else:
             self._request_with_proxies()
 
@@ -48,7 +50,10 @@ class Scrapper:
             print(f"using proxy {proxy}")
 
             try:
-                self.page = requests.get(self.url, proxies={"http": proxy, "https": proxy}, headers=self.headers)
+                self.page = requests.get(self.url,
+                                         proxies={"http": proxy, "https": proxy},
+                                         headers=self.headers,
+                                         timeout=self.timeout)
                 print("Request is a success.")
                 break
 

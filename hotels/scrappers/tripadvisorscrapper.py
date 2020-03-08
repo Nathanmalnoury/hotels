@@ -54,7 +54,7 @@ class TripAdvisorScrapper(Scrapper):
         dir_abs_path = os.path.dirname(os.path.abspath(__file__))
         root_path = os.path.dirname(os.path.dirname(dir_abs_path))
         path = os.path.join(root_path, "saves", "save_page_{}.json".format(page))
-
+        print(hotels)
         hotels_serialized = [h.__dict__ for h in hotels]
         with open(path, "w+") as f:
             json.dump(hotels_serialized, f)

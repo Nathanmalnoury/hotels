@@ -1,24 +1,21 @@
 import re
 
+from hotels.currency_exchanger import CurrencyExchanger
 from hotels.models.hotel import Hotel
 
 
 class HotelParser:
     def __init__(self, str_hotel):
         self.str_hotel = str_hotel
+        self.converter = CurrencyExchanger(token="d6e953f1f00fc9e91339")
 
     def parser(self):
-        try:
-            name = self.get_hotel_name()
-            rating = self.get_rating()
-            price = self.get_price()
-            detail_url = self.get_detail_url()
-            return Hotel(name=name, rating=rating, price=price, detail_url=detail_url)
+        name = self.get_hotel_name()
+        rating = self.get_rating()
+        price, currency = self.get_price()
+        detail_url = self.get_detail_url()
 
-        except Exception as e:
-            print(e)
-
-        return None
+        return Hotel(name=name, rating=rating, price=price, currency=currency, detail_url=detail_url)
 
     def get_hotel_name(self):
         try:
@@ -29,7 +26,6 @@ class HotelParser:
         except:
             print("Hotel name not found")
             return None
-
 
     def get_rating(self):
         try:
@@ -54,17 +50,30 @@ class HotelParser:
                     price_finder = re.compile(r'([\d,. ])+')
                     amount = price_finder.search(price).group()
                     symbol = price.replace(amount, "").strip()
+
                     amount = amount.strip()
+                    amount = self.clean_amount(amount)
 
                     print("amount: {}, in currency: {}".format(amount, symbol))
-                    # TODO convert money to euros
-                    return amount
+                    try:
+
+                        amount = self.converter.convert_price(price=amount, symb=symbol)
+                        symbol = "EUR"
+                        print("In euro : {}".format(amount))
+
+                    except Exception as e:
+                        print("Error while converting price")
+                        print(e)
+                        pass
+
+                    return amount, symbol
 
             except Exception as e:
-                print(e)
+                print("Error while parsing the price")
+                print(e.__class__, e)
 
         print("No Price found !")
-        return None
+        return None, None
 
     def get_detail_url(self):
         try:
@@ -76,3 +85,11 @@ class HotelParser:
             return link
         except:
             return None
+
+    @staticmethod
+    def clean_amount(amount):
+        # original amount "13,082.63" or "13 082.36"
+        # converts to float: 13082.63
+        amount = amount.replace(",", "")
+        amount = amount.replace(" ", "")
+        return float(amount)

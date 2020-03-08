@@ -36,5 +36,11 @@ class CurrencyExchanger:
         except IndexError:
             return None
 
+    def convert_price(self, price, symb, money_to="EUR"):
+        money_from = self.get_name_from_symbol(symb)
+        exchange_rate = self.get_exchange_rate(money_from=money_from, money_to=money_to)
+        print(type(exchange_rate))
+        return price * exchange_rate
+
 
 
