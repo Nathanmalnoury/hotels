@@ -3,6 +3,7 @@ from hotels.conf_reader import ConfReader
 from hotels.scrappers.proxyscrapper import ProxyScrapper
 from hotels.scrappers.scrapper import ProxyPool
 from hotels.scrappers.tripadvisorscrapper import TripAdvisorScrapper
+from hotels.utils import save_as_excel
 
 conf_reader = ConfReader()
 conf = conf_reader.get("conf.ini")
@@ -14,12 +15,6 @@ proxies = proxy_scrapper.get_proxies()
 print("Creating a proxy pool.")
 ProxyPool.initialize(proxies=proxies)
 
-print("Scrapping Base URL.")
-scrp = TripAdvisorScrapper(url=conf["TRIP_ADVISOR"]["base_url"])
-scrp.load_soup()
-
-print(scrp.hotels_info())
-
-# scrapper = PageScrapper()
-# scrapper.load_soup()
-# print(scrapper.get_list_hotels())
+print("Scrapping starts.")
+data = TripAdvisorScrapper.crawler(base_url=conf["TRIP_ADVISOR"]["base_url"])
+save_as_excel(data, "/home/nathan/Desktop/test.xlsx")
