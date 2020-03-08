@@ -18,12 +18,15 @@ class PageParser:
         return int(info[1])
 
     def get_next_page_link(self):
-        matcher = re.compile(r'<a class="nav next ui_button primary[\w\W]+?</a>')
-        tag = matcher.search(self.str_page).group()
-        href_matcher = re.compile(r'href=".*?"')
-        href = href_matcher.search(tag).group()
-        href = href.split("\"")
-        return href[1]
+        try:
+            matcher = re.compile(r'<a class="nav next ui_button primary[\w\W]+?</a>')
+            tag = matcher.search(self.str_page).group()
+            href_matcher = re.compile(r'href=".*?"')
+            href = href_matcher.search(tag).group()
+            href = href.split("\"")
+            return href[1]
+        except:
+            return None
 
     def get_current_page_number(self):
         matcher = re.compile(r'.* current [\w\W]+?</a>')

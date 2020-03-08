@@ -7,7 +7,7 @@ from hotels.models.hotel import Hotel
 class HotelParser:
     def __init__(self, str_hotel):
         self.str_hotel = str_hotel
-        self.converter = CurrencyExchanger(token="d6e953f1f00fc9e91339")
+        self.converter = CurrencyExchanger.instance()
 
     def parser(self):
         name = self.get_hotel_name()
