@@ -8,8 +8,8 @@ from hotels.scrappers.scrapper import Scrapper
 
 
 class TripAdvisorScrapper(Scrapper):
-    def __init__(self, url):
-        super().__init__(url)
+    def __init__(self, url, proxies=True):
+        super().__init__(url, proxies)
         self.root_url = os.path.dirname(url)
         print(self.root_url)
 

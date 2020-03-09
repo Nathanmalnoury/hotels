@@ -1,20 +1,23 @@
 #! /usr/bin/python3
-from hotels.conf_reader import ConfReader
-from hotels.scrappers.proxyscrapper import ProxyScrapper
-from hotels.scrappers.scrapper import ProxyPool
+from hotels.scrappers.details_scrapper import DetailsScrapper
 from hotels.scrappers.tripadvisorscrapper import TripAdvisorScrapper
-from hotels.utils import save_as_excel
+from hotels.utils import save_as_excel, init
 
-conf_reader = ConfReader()
-conf = conf_reader.get("conf.ini")
+conf = init()
 
-print("Searching proxies.")
-proxy_scrapper = ProxyScrapper(url=conf["PROXY_WEBSITE"]["base_url"])
-proxy_scrapper.load_soup(use_proxy=False)
-proxies = proxy_scrapper.get_proxies()
-print("Creating a proxy pool.")
-ProxyPool.initialize(proxies=proxies)
 
-print("Scrapping starts.")
-data = TripAdvisorScrapper.crawler(base_url=conf["TRIP_ADVISOR"]["base_url"])
-save_as_excel(data, "/home/nathan/Desktop/test.xlsx")
+def get_hotels_save_as_excel(url):
+    print("Scrapping starts.")
+    hotels = TripAdvisorScrapper.crawler(base_url=url)
+    path_excel = "/home/nathan/Desktop/test.xlsx"
+    save_as_excel(hotels, path_excel)
+    print("Created Excel file, path: {}".format(path_excel))
+    return hotels
+
+
+if __name__ == '__main__':
+    hotels_found = get_hotels_save_as_excel(conf["TRIP_ADVISOR"]["base_url"])
+    # url_test = "https://www.tripadvisor.co.uk/Hotel_Review-g187162-d197312-Reviews-Hotel_Mercure_Nancy_Centre_Gare-Nancy_Meurthe_et_Moselle_Grand_Est.html"
+    # ds = DetailsScrapper(url="http://www.whatismyproxy.com/")
+    # ds.load_soup()
+    # print(type(ds.page))

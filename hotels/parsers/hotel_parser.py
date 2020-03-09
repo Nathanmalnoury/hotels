@@ -41,11 +41,14 @@ class HotelParser:
             return None
 
     def get_price(self):
-        tag_matcher = re.compile(r'<div class="price autoResize"[\w\W]+?</div>')
+        tag_matcher = re.compile(r'<div .* data-sizegroup="mini-meta-price"[\w\W]+?</div>')
+        print("get price")
         for tag in re.finditer(tag_matcher, self.str_hotel):
             try:
                 lines = tag.group().split("\n")
+
                 if len(lines) == 3:
+
                     price = lines[1].strip()
                     price_finder = re.compile(r'([\d,. ])+')
                     amount = price_finder.search(price).group()
@@ -53,6 +56,7 @@ class HotelParser:
 
                     amount = amount.strip()
                     amount = self.clean_amount(amount)
+
 
                     print("amount: {}, in currency: {}".format(amount, symbol))
                     try:
@@ -72,7 +76,11 @@ class HotelParser:
                 print("Error while parsing the price")
                 print(e.__class__, e)
 
-        print("No Price found !")
+        print("No match found for tag_matcher")
+        print("=========================================================================")
+        print(self.str_hotel)
+        print("=========================================================================")
+
         return None, None
 
     def get_detail_url(self):
