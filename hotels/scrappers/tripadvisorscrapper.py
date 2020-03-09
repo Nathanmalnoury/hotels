@@ -6,6 +6,7 @@ import time
 from hotels.parsers.hotel_parser import HotelParser
 from hotels.parsers.page_parser import PageParser
 from hotels.scrappers.scrapper import Scrapper
+from hotels.utils import get_incomplete_hotel
 
 logger = logging.getLogger("Hotels")
 
@@ -86,6 +87,7 @@ class TripAdvisorScrapper(Scrapper):
             else:
                 url = root_url + next_url
 
-            logger.info(f"Current number of hotels found : {len(hotels)}")
+            logger.info(f"Current number of hotels found : {len(hotels)}, "
+                        f"Hotels missing information: {len(get_incomplete_hotel(hotels))}")
 
         return hotels

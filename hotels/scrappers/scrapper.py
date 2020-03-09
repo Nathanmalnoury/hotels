@@ -75,8 +75,8 @@ class Scrapper:
                 break
 
             except Exception as e:
-                logger.error("Connection Error for proxy {}".format(proxy))
-                logger.error(e)
+                logger.warning("Connection Error for proxy {}".format(proxy))
+                logger.warning(e)
                 proxy_pool.remove_proxy(proxy)
 
     @staticmethod

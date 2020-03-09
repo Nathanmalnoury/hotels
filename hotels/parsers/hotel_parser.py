@@ -91,16 +91,14 @@ class HotelParser:
         matcher = re.compile(r'<a.*"review_count[\w\W]+?</a>')
         try:
             tag = matcher.search(self.str_hotel).group()
-            logger.debug(tag)
+            count = tag.split("\n")
+            count = count[1]
+            count = count.split()
+            return int(count[0])
 
         except:
             logger.warning("No review count found")
             return
-
-        count = tag.split("\n")
-        count = count[1]
-        count = count.split()
-        return int(count[0])
 
     def no_price_available(self):
         matcher = re.compile(r'<div class="note">\n\s+Contact accommodation for availability.')
