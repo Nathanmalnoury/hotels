@@ -1,3 +1,4 @@
+pysingleton
 numpy
 lxml
 beautifulsoup4

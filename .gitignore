@@ -136,4 +136,4 @@ dmypy.json
 
 # project
 .idea/
-saves/
+saves/*.json

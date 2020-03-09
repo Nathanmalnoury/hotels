@@ -1,3 +1,4 @@
+import logging
 from time import sleep
 
 import requests
@@ -6,6 +7,8 @@ from selenium import webdriver
 
 from hotels.proxy_pool import ProxyPool
 
+logger = logging.getLogger("Hotels")
+
 
 class Scrapper:
     headers = {
@@ -13,7 +16,7 @@ class Scrapper:
     timeout = 20
 
     def __init__(self, url, proxies=False):
-        print("Scrapper initialised with url `{}`".format(url))
+        logger.info("Scrapper initialised with url `{}`".format(url))
         self.url = url
         self.page = None
         self.soup = None
@@ -52,14 +55,14 @@ class Scrapper:
         proxy_pool = ProxyPool.instance()
         while True:
             proxy = proxy_pool.get_proxy()
-            print(f"using proxy {proxy}")
+            logger.debug(f"using proxy {proxy}")
 
             try:
                 chrome = self._get_driver_options(proxy)
                 chrome.get(self.url)
-                sleep(40)
+                sleep(100)
 
-                print("Got title :" + chrome.title)
+                logger.debug("Got title :" + chrome.title)
 
                 if self.page_is_empty(page=chrome.page_source) or self.page_is_error(chrome.page_source):
                     chrome.close()
@@ -68,19 +71,19 @@ class Scrapper:
                 self.page = chrome.page_source
                 chrome.close()
 
-                print("Request is a success.")
+                logger.info("Request is a success.")
                 break
 
             except Exception as e:
-                print("Connection Error for proxy {}".format(proxy))
-                print(e)
+                logger.error("Connection Error for proxy {}".format(proxy))
+                logger.error(e)
                 proxy_pool.remove_proxy(proxy)
 
     @staticmethod
     def _get_driver_options(proxy):
         options = webdriver.ChromeOptions()
         options.add_argument(f'--proxy-server={proxy}')
-        # options.add_argument("--start-fullscreen")
+        options.add_argument('--headless')
 
         chrome = webdriver.Chrome(chrome_options=options)
         chrome.set_page_load_timeout(200)  # Wait n sec before giving up on loading page
@@ -105,5 +108,3 @@ class Scrapper:
             if err in page:
                 return True
         return False
-
-

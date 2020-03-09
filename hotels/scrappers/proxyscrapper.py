@@ -1,6 +1,10 @@
+import logging
+
 from lxml.html import fromstring
 
 from hotels.scrappers.scrapper import Scrapper
+
+logger = logging.getLogger("Hotels")
 
 
 class ProxyScrapper(Scrapper):
@@ -21,7 +25,7 @@ class ProxyScrapper(Scrapper):
         list_proxies = list(proxies)
         list_proxies.sort(key=lambda prox: dict_tmp[prox])
 
-        print(f"found {len(proxies)} proxies.")
+        logger.info(f"found {len(proxies)} proxies.")
         return list_proxies
 
     @staticmethod
@@ -33,5 +37,5 @@ class ProxyScrapper(Scrapper):
         elif unit in ["minutes", "minute"]:
             return int(l_[0]) * 60
         else:
-            print("unknown unit, {}".format(unit))
+            logger.error("unknown unit, {}".format(unit))
             raise Exception("unknown time unit")

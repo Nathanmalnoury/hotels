@@ -1,4 +1,6 @@
 import json
+import logging
+import math
 import os
 import random
 
@@ -7,6 +9,8 @@ import requests
 from singleton.singleton import Singleton
 
 from hotels.proxy_pool import ProxyPool
+
+logger = logging.getLogger("Hotels")
 
 @Singleton
 class CurrencyExchanger:
@@ -27,7 +31,7 @@ class CurrencyExchanger:
         token = random.choice(self.tokens)
         while True:
             proxy = proxy_pool.get_proxy()
-            print(f"using proxy {proxy}")
+            logger.debug(f"using proxy {proxy}")
 
             try:
                 resp = requests.get(
@@ -35,7 +39,7 @@ class CurrencyExchanger:
                     proxies={"http": proxy, "https": proxy},
                     headers=self.headers,
                     timeout=self.timeout)
-                print("API request is a success.")
+                logger.debug("Request to currency exchanger API is a success.")
                 if resp.ok:
                     break
                 else:
@@ -43,21 +47,20 @@ class CurrencyExchanger:
                     token = random.choice(self.tokens)
 
             except Exception as e:
-                print("Connection Error for proxy {}".format(proxy))
-                print(e)
+                logger.warning("Connection Error for proxy {}".format(proxy))
+                logger.warning(e)
                 proxy_pool.remove_proxy(proxy)
 
         dict_ = json.loads(resp.text)
         for k, v in dict_.items():
             self.exchange_rates[k] = v
-        print(self.exchange_rates)
+        logger.debug("Saved exchanged rates: {self.exchange_rates}")
 
     def get_exchange_rate(self, money_from, money_to="EUR"):
         exchange = "{}_{}".format(money_from, money_to)
         rate = self.exchange_rates.get(exchange)
-        print(rate)
         if rate is None:
-            print("Unknown Exchange rate '{}'. Requesting API".format(exchange))
+            logger.warning("Unknown Exchange rate '{}'. Requesting API".format(exchange))
             self._query(exchange)
 
         return self.exchange_rates.get(exchange, None)
@@ -73,6 +76,11 @@ class CurrencyExchanger:
         money_from = self.get_name_from_symbol(symb)
         exchange_rate = self.get_exchange_rate(money_from=money_from, money_to=money_to)
         if exchange_rate is not None:
-            return price * exchange_rate
+            return self.round(price * exchange_rate)
         else:
             return None
+
+    @staticmethod
+    def round(n, decimals=0):
+        multiplier = 10 ** decimals
+        return int(math.floor(n * multiplier + 0.5) / multiplier)

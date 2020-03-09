@@ -6,5 +6,5 @@ class HotelDetailsParser(Parser):
         super().__init__()
 
     def get_price(self):
-        test = self.soup.find("div", {"class" : "premium_offers_area offers"})
+        test = self.soup.find("div", {"class": "premium_offers_area offers"})
         print(test)

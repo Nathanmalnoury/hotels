@@ -1,7 +1,10 @@
+import logging
 import re
 
 from hotels.currency_exchanger import CurrencyExchanger
 from hotels.models.hotel import Hotel
+
+logger = logging.getLogger("Hotels")
 
 
 class HotelParser:
@@ -24,7 +27,7 @@ class HotelParser:
             lines = tag.split("\n")
             return lines[1].strip()
         except:
-            print("Hotel name not found")
+            logger.warning("Hotel name not found")
             return None
 
     def get_rating(self):
@@ -37,49 +40,31 @@ class HotelParser:
             last_number = ratings[2]
             return "{}/{}".format(first_number, last_number)
         except:
-            print("Hotel rating not found")
-            return None
+            votes = self.get_votes()
+            if votes is not None and votes == 0:
+                return "No votes"
+            else:
+                logger.warning("could not find rating")
+                return None
 
     def get_price(self):
         tag_matcher = re.compile(r'<div .* data-sizegroup="mini-meta-price"[\w\W]+?</div>')
-        print("get price")
         for tag in re.finditer(tag_matcher, self.str_hotel):
             try:
                 lines = tag.group().split("\n")
-
                 if len(lines) == 3:
-
-                    price = lines[1].strip()
-                    price_finder = re.compile(r'([\d,. ])+')
-                    amount = price_finder.search(price).group()
-                    symbol = price.replace(amount, "").strip()
-
-                    amount = amount.strip()
-                    amount = self.clean_amount(amount)
-
-
-                    print("amount: {}, in currency: {}".format(amount, symbol))
-                    try:
-
-                        amount = self.converter.convert_price(price=amount, symb=symbol)
-                        symbol = "EUR"
-                        print("In euro : {}".format(amount))
-
-                    except Exception as e:
-                        print("Error while converting price")
-                        print(e)
-                        pass
-
-                    return amount, symbol
+                    return self.price_parser(lines)
 
             except Exception as e:
-                print("Error while parsing the price")
-                print(e.__class__, e)
+                logger.error("Error while parsing the price:\n")
+                logger.error(e)
 
-        print("No match found for tag_matcher")
-        print("=========================================================================")
-        print(self.str_hotel)
-        print("=========================================================================")
+        if self.no_price_available():
+            logger.debug("No price available for this hotel.")
+            return "No price available", " "
+
+        logger.error("No match found for tag_matcher")
+        logger.debug(self.str_hotel)
 
         return None, None
 
@@ -101,3 +86,47 @@ class HotelParser:
         amount = amount.replace(",", "")
         amount = amount.replace(" ", "")
         return float(amount)
+
+    def get_votes(self):
+        matcher = re.compile(r'<a.*"review_count[\w\W]+?</a>')
+        try:
+            tag = matcher.search(self.str_hotel).group()
+            logger.debug(tag)
+
+        except:
+            logger.warning("No review count found")
+            return
+
+        count = tag.split("\n")
+        count = count[1]
+        count = count.split()
+        return int(count[0])
+
+    def no_price_available(self):
+        matcher = re.compile(r'<div class="note">\n\s+Contact accommodation for availability.')
+        match = matcher.search(self.str_hotel)
+        if match.group() is not None:
+            return True
+        return False
+
+    def price_parser(self, lines):
+        price = lines[1].strip()
+        price_finder = re.compile(r'([\d,. ])+')
+        amount = price_finder.search(price).group()
+        symbol = price.replace(amount, "").strip()
+
+        amount = amount.strip()
+        amount = self.clean_amount(amount)
+        msg = "amount: {}, in currency: {}".format(amount, symbol)
+        try:
+
+            amount = self.converter.convert_price(price=amount, symb=symbol)
+            symbol = "EUR"
+            logger.debug(msg + ", in euro : {}".format(amount))
+
+        except Exception as e:
+            logger.error("Error while converting price")
+            logger.error(e)
+            pass
+
+        return amount, symbol
