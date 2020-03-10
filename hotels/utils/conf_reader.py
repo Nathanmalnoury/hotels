@@ -20,7 +20,7 @@ class ConfReader:
         :rtype: dict
         """
         dir_abs_path = os.path.dirname(os.path.abspath(__file__))
-        root_path = os.path.dirname(dir_abs_path)
+        root_path = os.path.dirname(os.path.dirname(dir_abs_path))
         path = os.path.join(root_path, filename)
 
         if not os.path.isfile(path):

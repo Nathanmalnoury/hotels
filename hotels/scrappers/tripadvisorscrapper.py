@@ -3,6 +3,7 @@ import logging
 import os
 import time
 
+from hotels.utils.conf_reader import ConfReader
 from hotels.parsers.hotel_parser import HotelParser
 from hotels.parsers.page_parser import PageParser
 from hotels.scrappers.scrapper import Scrapper
@@ -55,37 +56,56 @@ class TripAdvisorScrapper(Scrapper):
         }
 
     @staticmethod
-    def save_updates(data, page):
-        logger.debug("Saving hotels")
-        dir_abs_path = os.path.dirname(os.path.abspath(__file__))
-        root_path = os.path.dirname(os.path.dirname(dir_abs_path))
-        path = os.path.join(root_path, "saves", f"save_page_{page}.json")
-        data["hotels"] = [h.__dict__ for h in data["hotels"]]
-        with open(path, "w+") as f:
-            json.dump(data, f)
-        logger.info(f"Saved data up until {page}")
+    def _get_save_dir():
+        conf = ConfReader.get("conf.ini")
+        return conf["TRIP_ADVISOR"]["save_dir"]
 
     @staticmethod
-    def roll_back_from_save(page_num):
+    def save_updates(data, page):
+        """
+
+        :param data: data to save
+        :type data: dict
+        :param page: page number, for file name
+        :type page: int
+        :return: None
+        """
+        logger.debug("Saving hotels")
+        path = os.path.join(TripAdvisorScrapper._get_save_dir(), f"save_page_{page}.json")
+        data["hotels"] = [h.__dict__ for h in data["hotels"]]
+
+        with open(path, "w+") as f:
+            json.dump(data, f)
+        logger.info(f"Saved data up until page {page}")
+
+    @staticmethod
+    def roll_back_from_save(page):
+        """
+
+        :param page: page number to retrieve json file with
+        :type page: int
+        :return: data
+        :rtype: dict
+        """
         logger.info("Getting hotels from save file.")
-        dir_abs_path = os.path.dirname(os.path.abspath(__file__))
-        root_path = os.path.dirname(os.path.dirname(dir_abs_path))
-        path = os.path.join(root_path, "saves", f"save_page_{page_num}.json")
+        path = os.path.join(TripAdvisorScrapper._get_save_dir(), f"save_page_{page}.json")
         with open(path, "r") as f:
             data = json.load(f)
         return data
 
     @staticmethod
-    def crawler(base_url):
-        hotels = []
+    def crawler(base_url, data=None):
+        if data is not None:
+            hotels = data["hotels"]
+        else:
+            hotels = []
+
         next_url = "undefined"
         url = base_url
         logger.info("Crawling starts")
 
         while next_url is not None:
             scrapper = TripAdvisorScrapper(url)
-            root_url = scrapper.root_url
-
             data = scrapper.process_one_page()
 
             hotels += data.get("hotels")
@@ -98,9 +118,9 @@ class TripAdvisorScrapper(Scrapper):
             if next_url is None:
                 break
             else:
-                url = root_url + next_url
+                url = scrapper.root_url + next_url
 
             logger.info(f"Current number of hotels found : {len(hotels)}, "
-                        f"Hotels missing information: {len(get_incomplete_hotel(hotels))}")
+                        f"number of hotels missing information: {len(get_incomplete_hotel(hotels))}")
 
         return hotels

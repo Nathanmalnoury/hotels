@@ -3,11 +3,11 @@ import time
 
 import click
 
-from hotels.conf_reader import ConfReader
+from hotels.utils.conf_reader import ConfReader
 from hotels.scrappers.tripadvisorscrapper import TripAdvisorScrapper
-from hotels.utils.misc import init
+from hotels.utils.click_utils import check_args, check_excel
 from hotels.utils.hotels import save_as_excel
-from hotels.utils.click_utils import check_args
+from hotels.utils.misc import init
 
 conf = ConfReader.get("conf.ini")
 logger = logging.getLogger("Hotels")
@@ -35,3 +35,28 @@ def scrap(base_url, excel_path):
     logger.info(f"Created Excel file, path: {excel_path}")
     logger.info(f"Processing took {end - start}")
     click.echo("Success.")
+
+
+@scrapper.command(help="Recover data from a save and start scrapping based on the saved information.")
+@click.option("--page", type=int, help="page number to get the save from.")
+@click.option("--excel-path", type=str, help="Path to save the excel sheet. Use conf.ini by default",
+              default=conf["TRIP_ADVISOR"]["excel_path"])
+def restart_from_save(page, excel_path):
+    check_excel(excel_path)
+    init()
+    data = TripAdvisorScrapper.roll_back_from_save(page)
+    # logger.debug(data)
+    logger.info(f"Recovered data from page {page}. Found {len(data['hotels'])} hotels.")
+    start = time.time()
+    url = "https://www.tripadvisor.co.uk" + data["next_link"]
+    hotels = TripAdvisorScrapper.crawler(url, data=data)
+    save_as_excel(hotels, excel_path)
+    end = time.time()
+    logger.info(f"Created Excel file, path: {excel_path}")
+    logger.info(f"Processing took {end - start}")
+    click.echo("Success.")
+
+
+@scrapper.command(help="show saved files.")
+def saves():
+    pass

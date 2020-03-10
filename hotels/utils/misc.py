@@ -1,10 +1,11 @@
 import logging
 import os
 
-from hotels.conf_reader import ConfReader
+from hotels.utils.conf_reader import ConfReader
 from hotels.currency_exchanger import CurrencyExchanger
 from hotels.proxy_pool import ProxyPool
 from hotels.scrappers.proxyscrapper import ProxyScrapper
+from hotels.utils.custom_formatter import CustomFormatter
 
 
 def init():
@@ -12,8 +13,7 @@ def init():
     logger = logging.getLogger("Hotels")
     os.environ["geckodriver"] = "/home/nathan/Projects/hotels/data/"
 
-    conf_reader = ConfReader()
-    conf = conf_reader.get("conf.ini")
+    conf = ConfReader.get("conf.ini")
     logger.info("Searching proxies.")
 
     proxy_scrapper = ProxyScrapper(url=conf["PROXY_WEBSITE"]["base_url"])
@@ -32,17 +32,19 @@ def set_logger():
     logger = logging.getLogger('Hotels')
     logger.setLevel(logging.DEBUG)
     # create file handler which logs even debug messages
-    fh = logging.FileHandler('hotels.log')
+    conf = ConfReader.get("conf.ini")
+
+    path_conf = os.path.join(conf["TRIP_ADVISOR"]["log_dir"], "hotels.log")
+    fh = logging.FileHandler(path_conf, mode="a+")
     fh.setLevel(logging.DEBUG)
     # create console handler with a higher log level
     ch = logging.StreamHandler()
     ch.setLevel(logging.DEBUG)
     # create formatter and add it to the handlers
-    formatter = logging.Formatter(fmt='%(asctime)s:%(levelname)s:%(filename)s-l%(lineno)d: %(message)s',
-                                  datefmt="%H:%M:%S")
-    fh.setFormatter(formatter)
-    ch.setFormatter(formatter)
+    fh.setFormatter(CustomFormatter())
+    ch.setFormatter(CustomFormatter())
     # add the handlers to the logger
     logger.addHandler(fh)
     logger.addHandler(ch)
     logger.debug("logger setup")
+

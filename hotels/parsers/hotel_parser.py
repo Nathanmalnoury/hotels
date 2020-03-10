@@ -120,7 +120,7 @@ class HotelParser:
 
             amount = self.converter.convert_price(price=amount, symb=symbol)
             symbol = "EUR"
-            logger.debug(msg + f", in euro : {amount}")
+            logger.debug(msg + f", meaning: {amount}€")
 
         except Exception as e:
             logger.error("Error while converting price")

@@ -8,7 +8,7 @@ import pandas as pd
 import requests
 from singleton.singleton import Singleton
 
-from hotels.conf_reader import ConfReader
+from hotels.utils.conf_reader import ConfReader
 from hotels.proxy_pool import ProxyPool
 
 logger = logging.getLogger("Hotels")

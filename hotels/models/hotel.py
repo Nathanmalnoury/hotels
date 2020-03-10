@@ -1,6 +1,6 @@
 import os
 
-from hotels.conf_reader import ConfReader
+from hotels.utils.conf_reader import ConfReader
 
 
 class Hotel:
