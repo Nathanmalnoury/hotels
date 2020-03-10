@@ -6,7 +6,7 @@ import time
 from hotels.parsers.hotel_parser import HotelParser
 from hotels.parsers.page_parser import PageParser
 from hotels.scrappers.scrapper import Scrapper
-from hotels.utils import get_incomplete_hotel
+from hotels.utils.hotels import get_incomplete_hotel
 
 logger = logging.getLogger("Hotels")
 
