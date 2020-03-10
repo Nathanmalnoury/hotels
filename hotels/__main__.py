@@ -17,7 +17,7 @@ def get_hotels_save_as_excel(url, path_excel):
 
 if __name__ == '__main__':
     conf = init()
-    hotels_found = get_hotels_save_as_excel(
-        conf["TRIP_ADVISOR"]["base_url"],
-        conf["TRIP_ADVISOR"]["excel_path"]
-    )
+    # hotels_found = get_hotels_save_as_excel(
+    #     conf["TRIP_ADVISOR"]["base_url"],
+    #     conf["TRIP_ADVISOR"]["excel_path"]
+    # )

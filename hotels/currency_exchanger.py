@@ -8,23 +8,28 @@ import pandas as pd
 import requests
 from singleton.singleton import Singleton
 
+from hotels.conf_reader import ConfReader
 from hotels.proxy_pool import ProxyPool
 
 logger = logging.getLogger("Hotels")
+
 
 @Singleton
 class CurrencyExchanger:
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
     timeout = 20
-    tokens = ["2ab0a578e59c2ad88e54", "d6e953f1f00fc9e91339", "0c27490e0fd1c6dd6b89", "8a003c09e5e38f87e892"]
 
     def __init__(self):
         dir_path = os.path.dirname(__file__)
         root_path = os.path.dirname(dir_path)
         self.df_symbols_to_name = pd.read_csv(os.path.join(root_path, "data/money_symbols.csv"))
+
         self.exchange_rates = {}
-        self.base_url = "https://free.currconv.com/api/v7/"
+
+        conf = ConfReader.get("conf.ini")
+        self.tokens = conf["CURRENCY_API"]["tokens"].split(",")
+        self.base_url = conf["CURRENCY_API"]["base_url"]
 
     def _query(self, arg):
         proxy_pool = ProxyPool.instance()
