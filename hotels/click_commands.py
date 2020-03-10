@@ -1,4 +1,6 @@
+import glob
 import logging
+import os
 import time
 
 import click
@@ -59,4 +61,8 @@ def restart_from_save(page, excel_path):
 
 @scrapper.command(help="show saved files.")
 def saves():
-    pass
+    path = conf["TRIP_ADVISOR"]["save_dir"]
+    list_of_files = glob.glob(path + '*')  # * means all if need specific format then *.csv
+    list_of_files.sort(key=os.path.getctime, reverse=True)
+    for path in list_of_files:
+        click.echo(os.path.basename(path))
