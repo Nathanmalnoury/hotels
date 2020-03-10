@@ -16,7 +16,7 @@ class Scrapper:
     timeout = 20
 
     def __init__(self, url, proxies=False):
-        logger.info("Scrapper initialised with url `{}`".format(url))
+        logger.info(f"Scrapper initialised with url '{url}'")
         self.url = url
         self.page = None
         self.soup = None
@@ -75,7 +75,7 @@ class Scrapper:
                 break
 
             except Exception as e:
-                logger.warning("Connection Error for proxy {}".format(proxy))
+                logger.warning(f"Connection Error for proxy {proxy}")
                 logger.warning(e)
                 proxy_pool.remove_proxy(proxy)
 

@@ -38,7 +38,7 @@ def set_logger():
     ch = logging.StreamHandler()
     ch.setLevel(logging.DEBUG)
     # create formatter and add it to the handlers
-    formatter = logging.Formatter(fmt='%(asctime)s:%(levelname)s: %(module)s/%(funcName)s : %(message)s',
+    formatter = logging.Formatter(fmt='%(asctime)s:%(levelname)s:%(filename)s-l%(lineno)d: %(message)s',
                                   datefmt="%H:%M:%S")
     fh.setFormatter(formatter)
     ch.setFormatter(formatter)

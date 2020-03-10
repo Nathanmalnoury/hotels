@@ -36,7 +36,8 @@ class TripAdvisorScrapper(Scrapper):
         start = time.time()
         self.load_soup(use_proxy=True)
         hotels = self.hotels_info()
-        logger.info("Process one page in {:.2f} s.".format(time.time() - start))
+        elapsed_time = time.time() - start
+        logger.info(f"Process one page in {elapsed_time:.2f} s.")
         next_info = self.get_page_info()
         if next_info is not None:
             return dict([("hotels", hotels)], **next_info)
@@ -47,20 +48,32 @@ class TripAdvisorScrapper(Scrapper):
         start = time.time()
         self.load_soup(use_proxy=True)
         hotels = self.hotels_info()
-        logger.info("Process one page in {:.2f} s.".format(time.time() - start))
+        elapsed_time = time.time() - start
+        logger.info(f"Process one page in {elapsed_time:.2f} s.")
         return {
             "hotels": hotels
         }
 
     @staticmethod
-    def save_updates(hotels, page):
+    def save_updates(data, page):
         logger.debug("Saving hotels")
         dir_abs_path = os.path.dirname(os.path.abspath(__file__))
         root_path = os.path.dirname(os.path.dirname(dir_abs_path))
-        path = os.path.join(root_path, "saves", "save_page_{}.json".format(page))
-        hotels_serialized = [h.__dict__ for h in hotels]
+        path = os.path.join(root_path, "saves", f"save_page_{page}.json")
+        data["hotels"] = [h.__dict__ for h in data["hotels"]]
         with open(path, "w+") as f:
-            json.dump(hotels_serialized, f)
+            json.dump(data, f)
+        logger.info(f"Saved data up until {page}")
+
+    @staticmethod
+    def roll_back_from_save(page_num):
+        logger.info("Getting hotels from save file.")
+        dir_abs_path = os.path.dirname(os.path.abspath(__file__))
+        root_path = os.path.dirname(os.path.dirname(dir_abs_path))
+        path = os.path.join(root_path, "saves", f"save_page_{page_num}.json")
+        with open(path, "r") as f:
+            data = json.load(f)
+        return data
 
     @staticmethod
     def crawler(base_url):
@@ -80,8 +93,8 @@ class TripAdvisorScrapper(Scrapper):
             page_max = data.get("total_page")
             next_url = data.get("next_link")
 
-            TripAdvisorScrapper.save_updates(hotels, current_page)
-            logger.info("Crawled Page {}/{}. Url : '{}'".format(current_page, page_max, url))
+            TripAdvisorScrapper.save_updates(data, current_page)
+            logger.info(f"Crawled Page {current_page}/{page_max}. Url : '{url}'")
             if next_url is None:
                 break
             else:

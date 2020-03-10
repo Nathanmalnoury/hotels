@@ -11,7 +11,7 @@ class ProxyPool:
     def __init__(self, proxies):
         self.proxies = proxies
         self.proxy_pool = self._create_pool()
-        logger.debug('ProxyPool created with {} proxies'.format(len(self.proxies)))
+        logger.debug(f'ProxyPool created with {len(self.proxies)} proxies')
 
     def _create_pool(self):
         return cycle(self.proxies)
@@ -22,4 +22,4 @@ class ProxyPool:
     def remove_proxy(self, proxy):
         self.proxies.remove(proxy)
         self.proxy_pool = self._create_pool()
-        logger.debug("ProxyPool updated. New number of proxies: {}".format(len(self.proxies)))
+        logger.debug(f"ProxyPool updated. New number of proxies: {len(self.proxies)}")

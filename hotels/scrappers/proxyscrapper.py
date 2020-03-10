@@ -37,5 +37,5 @@ class ProxyScrapper(Scrapper):
         elif unit in ["minutes", "minute"]:
             return int(l_[0]) * 60
         else:
-            logger.error("unknown unit, {}".format(unit))
+            logger.error(f"unknown unit, {unit}")
             raise Exception("unknown time unit")

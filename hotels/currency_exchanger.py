@@ -40,7 +40,7 @@ class CurrencyExchanger:
 
             try:
                 resp = requests.get(
-                    url=self.base_url + "convert?q={}&compact=ultra&apiKey={}".format(arg, token),
+                    url=self.base_url + f"convert?q={arg}&compact=ultra&apiKey={token}",
                     proxies={"http": proxy, "https": proxy},
                     headers=self.headers,
                     timeout=self.timeout)
@@ -52,20 +52,20 @@ class CurrencyExchanger:
                     token = random.choice(self.tokens)
 
             except Exception as e:
-                logger.warning("Connection Error for proxy {}".format(proxy))
+                logger.warning(f"Connection Error for proxy {proxy}")
                 logger.warning(e)
                 proxy_pool.remove_proxy(proxy)
 
         dict_ = json.loads(resp.text)
         for k, v in dict_.items():
             self.exchange_rates[k] = v
-        logger.debug("Saved exchanged rates: {self.exchange_rates}")
+        logger.debug(f"Saved exchanged rates: {self.exchange_rates}")
 
     def get_exchange_rate(self, money_from, money_to="EUR"):
-        exchange = "{}_{}".format(money_from, money_to)
+        exchange = f"{money_from}_{money_to}"
         rate = self.exchange_rates.get(exchange)
         if rate is None:
-            logger.warning("Unknown Exchange rate '{}'. Requesting API".format(exchange))
+            logger.warning(f"Unknown Exchange rate '{exchange}'. Requesting API")
             self._query(exchange)
 
         return self.exchange_rates.get(exchange, None)

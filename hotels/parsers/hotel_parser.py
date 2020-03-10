@@ -38,7 +38,7 @@ class HotelParser:
             ratings = rating_matcher.search(tag).group().split()
             first_number = ratings[0][1:]  # matches on '"4.5', we have to remove "
             last_number = ratings[2]
-            return "{}/{}".format(first_number, last_number)
+            return f"{first_number}/{last_number}"
         except:
             votes = self.get_votes()
             if votes is not None and votes == 0:
@@ -115,12 +115,12 @@ class HotelParser:
 
         amount = amount.strip()
         amount = self.clean_amount(amount)
-        msg = "amount: {}, in currency: {}".format(amount, symbol)
+        msg = f"amount: {amount}, in currency: {symbol}"
         try:
 
             amount = self.converter.convert_price(price=amount, symb=symbol)
             symbol = "EUR"
-            logger.debug(msg + ", in euro : {}".format(amount))
+            logger.debug(msg + f", in euro : {amount}")
 
         except Exception as e:
             logger.error("Error while converting price")
