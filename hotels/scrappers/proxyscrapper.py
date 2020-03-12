@@ -1,5 +1,6 @@
 import logging
 
+from bs4 import BeautifulSoup
 from lxml.html import fromstring
 
 from hotels.scrappers.scrapper import Scrapper
@@ -10,8 +11,15 @@ logger = logging.getLogger("Hotels")
 class ProxyScrapper(Scrapper):
     def __init__(self, url):
         super().__init__(url)
+        self.list_proxies = []
 
-    def get_proxies(self):
+    def get_proxies(self, use_proxy=False):
+        if not self.list_proxies:
+            self._request_proxies(use_proxy)
+        return self.list_proxies
+
+    def _request_proxies(self, use_proxy=False):
+        self.simple_request(use_proxy=use_proxy)
         parser = fromstring(self.page.text)
         proxies = set()
         dict_tmp = {}
@@ -26,7 +34,7 @@ class ProxyScrapper(Scrapper):
         list_proxies.sort(key=lambda prox: dict_tmp[prox])
 
         logger.info(f"found {len(proxies)} proxies.")
-        return list_proxies
+        self.list_proxies = list_proxies
 
     @staticmethod
     def parse_time(time_sentence):

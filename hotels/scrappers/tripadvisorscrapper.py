@@ -3,29 +3,58 @@ import logging
 import os
 import time
 
-from hotels.utils.conf_reader import ConfReader
+from bs4 import BeautifulSoup
+
 from hotels.parsers.hotel_parser import HotelParser
 from hotels.parsers.page_parser import PageParser
+from hotels.proxy_pool import ProxyPool
 from hotels.scrappers.scrapper import Scrapper
-from hotels.utils.hotels import get_incomplete_hotel
+from hotels.utils.conf_reader import ConfReader
 
 logger = logging.getLogger("Hotels")
 
 
 class TripAdvisorScrapper(Scrapper):
-    def __init__(self, url, proxies=True):
-        super().__init__(url, proxies)
+    def __init__(self, url):
+        super().__init__(url)
         self.root_url = os.path.dirname(url)
 
+    def scrap(self, headless=True, load_timeout=200):
+        proxy_pool = ProxyPool.instance()
+        while True:
+            proxy = proxy_pool.get_proxy()
+
+            try:
+                driver = self.get_driver(proxy=proxy, headless=headless, load_timeout=load_timeout)
+                driver.get(self.url)
+                if self.page_is_empty(driver) or self.page_is_error(driver):
+                    driver.close()
+                    logger.debug("Empty page, or error page.")
+                    continue
+
+                # self.chrome_change_currency()
+                time.sleep(25)
+                logger.debug(f"Request is a success, for page '{driver.title}'")
+                self.page = driver.page_source
+                driver.close()
+                break
+
+            except:
+
+                driver.close()
+                proxy_pool.remove_proxy(proxy)
+
     def get_page_info(self):
-        card = self.soup.find("div", {"class": "unified ui_pagination standard_pagination ui_section listFooter"})
+        soup = BeautifulSoup(self.page, "html.parser")
+        card = soup.find("div", {"class": "unified ui_pagination standard_pagination ui_section listFooter"})
         if card is not None:
             return PageParser(str(card.prettify())).get_info()
         else:
             return None
 
     def hotels_info(self):
-        cards = self.soup.find_all("div", {"class": "prw_rup prw_meta_hsx_responsive_listing ui_section listItem"})
+        soup = BeautifulSoup(self.page, "html.parser")
+        cards = soup.find_all("div", {"class": "prw_rup prw_meta_hsx_responsive_listing ui_section listItem"})
         info = []
         for hotel_card in cards:
             if hotel_card is not None:
@@ -35,7 +64,7 @@ class TripAdvisorScrapper(Scrapper):
 
     def process_one_page(self):
         start = time.time()
-        self.load_soup(use_proxy=True)
+        self.scrap()
         hotels = self.hotels_info()
         elapsed_time = time.time() - start
         logger.info(f"Process one page in {elapsed_time:.2f} s.")
@@ -44,16 +73,6 @@ class TripAdvisorScrapper(Scrapper):
             return dict([("hotels", hotels)], **next_info)
         else:
             return {"hotels": hotels}
-
-    def process_last_page(self):
-        start = time.time()
-        self.load_soup(use_proxy=True)
-        hotels = self.hotels_info()
-        elapsed_time = time.time() - start
-        logger.info(f"Process one page in {elapsed_time:.2f} s.")
-        return {
-            "hotels": hotels
-        }
 
     @staticmethod
     def _get_save_dir():
@@ -119,8 +138,37 @@ class TripAdvisorScrapper(Scrapper):
                 break
             else:
                 url = scrapper.root_url + next_url
-
-            logger.info(f"Current number of hotels found : {len(hotels)}, "
-                        f"number of hotels missing information: {len(get_incomplete_hotel(hotels))}")
-
         return hotels
+
+    def chrome_change_currency(self):
+        try:
+            time.sleep(3)
+            self.driver.find_element_by_xpath("//div[@data-header='Currency']").click()
+            time.sleep(3)
+            self.driver.find_elements_by_xpath("//div[@class='prw_rup prw_homepage_currency_picker']")
+            self.driver.find_element_by_xpath("//li[contains(@onclick, 'EUR')][0]").click()
+            time.sleep(25)
+            return True
+        except Exception as e:
+            logger.exception(e)
+            return False
+
+    @staticmethod
+    def page_is_error(driver):
+        err_detector = ["Privacy error", "error-information-button", "ERR_"]
+        for err in err_detector:
+            if err in driver.page_source:
+                return True
+        return False
+
+    @staticmethod
+    def page_is_empty(driver):
+        page = driver.page_source
+        if page == "<html><head></head><body></body></html>":
+            return True
+        elif page is None:
+            return True
+        elif not page:
+            return True
+        else:
+            return False

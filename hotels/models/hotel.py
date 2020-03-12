@@ -14,5 +14,20 @@ class Hotel:
         self.rating = rating
         self.price = price
         self.currency = currency
-
         self.detail_url = Hotel.root_url + detail_url if needs_root else detail_url
+
+    @staticmethod
+    def from_json(list_of_dict):
+        list_hotels = []
+        for hotel in list_of_dict:
+            list_hotels.append(
+                Hotel(
+                    name=hotel["name"],
+                    rating=hotel["rating"],
+                    price=hotel["price"],
+                    currency=hotel["currency"],
+                    detail_url=hotel["detail_url"],
+                    needs_root=False,
+                )
+            )
+        return list_hotels

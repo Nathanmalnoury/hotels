@@ -5,9 +5,9 @@ import time
 
 import click
 
-from hotels.utils.conf_reader import ConfReader
 from hotels.scrappers.tripadvisorscrapper import TripAdvisorScrapper
 from hotels.utils.click_utils import check_args, check_excel
+from hotels.utils.conf_reader import ConfReader
 from hotels.utils.hotels import save_as_excel
 from hotels.utils.misc import init
 
@@ -47,7 +47,6 @@ def restart_from_save(page, excel_path):
     check_excel(excel_path)
     init()
     data = TripAdvisorScrapper.roll_back_from_save(page)
-    # logger.debug(data)
     logger.info(f"Recovered data from page {page}. Found {len(data['hotels'])} hotels.")
     start = time.time()
     url = "https://www.tripadvisor.co.uk" + data["next_link"]

@@ -33,3 +33,7 @@ class PageParser:
         tag = matcher.search(self.str_page).group()
         number = tag.split("\n")[1]
         return int(number.strip())
+
+    @classmethod
+    def parse(cls, driver):
+        pass

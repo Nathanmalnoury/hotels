@@ -77,6 +77,7 @@ class HotelParser:
             link = link.split("\"")[1]
             return link
         except:
+            logger.error("Get detail url failed.")
             return None
 
     @staticmethod
@@ -98,7 +99,7 @@ class HotelParser:
 
         except:
             logger.warning("No review count found")
-            return
+            return None
 
     def no_price_available(self):
         matcher = re.compile(r'<div class="note">\n\s+Contact accommodation for availability.')
@@ -115,12 +116,10 @@ class HotelParser:
 
         amount = amount.strip()
         amount = self.clean_amount(amount)
-        msg = f"amount: {amount}, in currency: {symbol}"
         try:
 
             amount = self.converter.convert_price(price=amount, symb=symbol)
             symbol = "EUR"
-            logger.debug(msg + f", meaning: {amount}€")
 
         except Exception as e:
             logger.error("Error while converting price")

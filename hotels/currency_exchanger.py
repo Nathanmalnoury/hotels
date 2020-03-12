@@ -62,6 +62,8 @@ class CurrencyExchanger:
         logger.debug(f"Saved exchanged rates: {self.exchange_rates}")
 
     def get_exchange_rate(self, money_from, money_to="EUR"):
+        if money_from == money_to:
+            return 1.0
         exchange = f"{money_from}_{money_to}"
         rate = self.exchange_rates.get(exchange)
         if rate is None:

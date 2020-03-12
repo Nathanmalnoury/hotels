@@ -1,27 +1,23 @@
 import logging
 import os
 
-from hotels.utils.conf_reader import ConfReader
 from hotels.currency_exchanger import CurrencyExchanger
 from hotels.proxy_pool import ProxyPool
 from hotels.scrappers.proxyscrapper import ProxyScrapper
+from hotels.utils.conf_reader import ConfReader
 from hotels.utils.custom_formatter import CustomFormatter
 
 
 def init():
     set_logger()
     logger = logging.getLogger("Hotels")
-    os.environ["geckodriver"] = "/home/nathan/Projects/hotels/data/"
-
     conf = ConfReader.get("conf.ini")
-    logger.info("Searching proxies.")
 
+    logger.info("Searching proxies.")
     proxy_scrapper = ProxyScrapper(url=conf["PROXY_WEBSITE"]["base_url"])
-    proxy_scrapper.load_soup(use_proxy=False)
-    proxies = proxy_scrapper.get_proxies()
 
     logger.info("Creating a proxy pool.")
-    ProxyPool.initialize(proxies=proxies)
+    ProxyPool.initialize(proxies=proxy_scrapper.get_proxies())
 
     logger.info("Creating a currency exchanger.")
     CurrencyExchanger.initialize()
@@ -47,4 +43,3 @@ def set_logger():
     logger.addHandler(fh)
     logger.addHandler(ch)
     logger.debug("logger setup")
-
