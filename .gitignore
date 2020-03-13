@@ -137,3 +137,4 @@ dmypy.json
 # project
 .idea/
 saves/*.json
+conf.ini
