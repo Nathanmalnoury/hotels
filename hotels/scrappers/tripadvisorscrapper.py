@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import time
+from datetime import date
 
 from bs4 import BeautifulSoup
 
@@ -15,24 +16,27 @@ logger = logging.getLogger("Hotels")
 
 
 class TripAdvisorScrapper(Scrapper):
-    def __init__(self, url):
+    def __init__(self, url, headless=True, load_timeout=200):
         super().__init__(url)
         self.root_url = os.path.dirname(url)
+        self.headless = headless
+        self.load_timeout = load_timeout
 
-    def scrap(self, headless=True, load_timeout=200):
+    def scrap(self):
         proxy_pool = ProxyPool.instance()
         while True:
             proxy = proxy_pool.get_proxy()
+            driver = self.get_driver(proxy=proxy, headless=self.headless, load_timeout=self.load_timeout)
 
             try:
-                driver = self.get_driver(proxy=proxy, headless=headless, load_timeout=load_timeout)
                 driver.get(self.url)
                 if self.page_is_empty(driver) or self.page_is_error(driver):
-                    driver.close()
                     logger.debug("Empty page, or error page.")
+                    driver.close()
+                    proxy_pool.remove_proxy(proxy)
                     continue
 
-                # self.chrome_change_currency()
+                self.chrome_change_currency(driver)
                 time.sleep(25)
                 logger.debug(f"Request is a success, for page '{driver.title}'")
                 self.page = driver.page_source
@@ -40,7 +44,6 @@ class TripAdvisorScrapper(Scrapper):
                 break
 
             except:
-
                 driver.close()
                 proxy_pool.remove_proxy(proxy)
 
@@ -95,6 +98,7 @@ class TripAdvisorScrapper(Scrapper):
 
         with open(path, "w+") as f:
             json.dump(data, f)
+
         logger.info(f"Saved data up until page {page}")
 
     @staticmethod
@@ -113,7 +117,7 @@ class TripAdvisorScrapper(Scrapper):
         return data
 
     @staticmethod
-    def crawler(base_url, data=None):
+    def crawler(base_url, data=None, headless=True, load_timeout=200):
         if data is not None:
             hotels = data["hotels"]
         else:
@@ -124,13 +128,15 @@ class TripAdvisorScrapper(Scrapper):
         logger.info("Crawling starts")
 
         while next_url is not None:
-            scrapper = TripAdvisorScrapper(url)
+            scrapper = TripAdvisorScrapper(url, headless=headless, load_timeout=load_timeout)
             data = scrapper.process_one_page()
 
             hotels += data.get("hotels")
             current_page = data.get("current_page")
             page_max = data.get("total_page")
             next_url = data.get("next_link")
+
+            data["hotels"] = hotels  # for saving all hotels
 
             TripAdvisorScrapper.save_updates(data, current_page)
             logger.info(f"Crawled Page {current_page}/{page_max}. Url : '{url}'")
@@ -140,17 +146,20 @@ class TripAdvisorScrapper(Scrapper):
                 url = scrapper.root_url + next_url
         return hotels
 
-    def chrome_change_currency(self):
+    @staticmethod
+    def chrome_change_currency(driver):
         try:
-            time.sleep(3)
-            self.driver.find_element_by_xpath("//div[@data-header='Currency']").click()
-            time.sleep(3)
-            self.driver.find_elements_by_xpath("//div[@class='prw_rup prw_homepage_currency_picker']")
-            self.driver.find_element_by_xpath("//li[contains(@onclick, 'EUR')][0]").click()
-            time.sleep(25)
+            time.sleep(5)
+            driver.find_element_by_xpath("//div[@data-header='Currency']").click()
+            time.sleep(15)
+            euro = driver.find_element_by_xpath("//div[@class='currency_code' and text() = 'EUR']/parent::node()")
+            euro.click()
+            time.sleep(5)
+            logger.info("Change currency, success.")
             return True
+
         except Exception as e:
-            logger.exception(e)
+            logger.warning("Change currency, fail.")
             return False
 
     @staticmethod

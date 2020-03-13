@@ -25,12 +25,16 @@ def scrapper():
               default=conf["TRIP_ADVISOR"]["base_url"])
 @click.option("--excel-path", type=str, help="Path to save the excel sheet. Use conf.ini by default",
               default=conf["TRIP_ADVISOR"]["excel_path"])
-def scrap(base_url, excel_path):
+@click.option("--show-browser", is_flag=True, help="Open the browser and show it to the user.",
+              default=False)
+@click.option("--timeout", type=int, help="Time to wait for the page to charge before trying another proxy..",
+              default=120)
+def scrap(base_url, excel_path, show_browser, timeout):
     check_args(base_url, excel_path)
     init()
     logger.info(f"Scrapping starts. Path to save excel: '{excel_path}'")
     start = time.time()
-    hotels = TripAdvisorScrapper.crawler(base_url=base_url)
+    hotels = TripAdvisorScrapper.crawler(base_url=base_url, headless=not show_browser, load_timeout=timeout)
     save_as_excel(hotels, excel_path)
     end = time.time()
 
