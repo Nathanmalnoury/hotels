@@ -33,16 +33,3 @@ class Scrapper:
 
         self.page = requests.get(**parameters)
         return self.page
-
-    @staticmethod
-    def get_driver(proxy=None, headless=True, load_timeout=200):
-        options = webdriver.ChromeOptions()
-        if proxy is not None:
-            options.add_argument(f'--proxy-server={proxy}')
-        if headless:
-            options.add_argument('--headless')
-
-        chrome = webdriver.Chrome(chrome_options=options)
-        chrome.set_page_load_timeout(load_timeout)  # Wait n sec before giving up on loading page
-        chrome.set_window_size(width=1700, height=500)
-        return chrome
