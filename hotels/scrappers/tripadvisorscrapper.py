@@ -8,8 +8,8 @@ from bs4 import BeautifulSoup
 from hotels.parsers.hotel_parser import HotelParser
 from hotels.parsers.page_parser import PageParser
 from hotels.scrappers.scrapper import Scrapper
-from hotels.scrappers.web_driver import WebDriver
-from hotels.utils.conf_reader import ConfReader
+from hotels.scrappers.web_driver import WebDriverTripAdvisor
+from hotels.utils.conf import Conf
 
 logger = logging.getLogger("Hotels")
 
@@ -42,7 +42,7 @@ class TripAdvisorScrapper(Scrapper):
 
     @staticmethod
     def _get_save_dir():
-        conf = ConfReader.get("conf.ini")
+        conf = Conf()
         return conf["TRIP_ADVISOR"]["save_dir"]
 
     @staticmethod
@@ -105,7 +105,7 @@ class TripAdvisorScrapper(Scrapper):
         scrapper = TripAdvisorScrapper(url, headless=headless)
 
         start = time.time()
-        scrapper.page = WebDriver.get(url=scrapper.url, headless=scrapper.headless)
+        scrapper.page = WebDriverTripAdvisor.get(url=scrapper.url, headless=scrapper.headless)
         found_hotels = scrapper.hotels_info()
         next_info = scrapper.get_page_info()
         elapsed_time = time.time() - start
@@ -120,7 +120,8 @@ class TripAdvisorScrapper(Scrapper):
         TripAdvisorScrapper.save_updates(dict([("hotels", hotels)], **next_info), current_page)
 
         logger.info(
-            f"Scrapped Page {current_page}/{page_max}. Found {len(found_hotels)} hotels, {len(hotels)} in total."
+            f"Scrapped Page {current_page}/{page_max} in {elapsed_time:.2f}s. "
+            f"Found {len(found_hotels)} hotels, {len(hotels)} in total."
         )
 
         return next_url, elapsed_time, current_page, page_max
@@ -140,4 +141,4 @@ class TripAdvisorScrapper(Scrapper):
         eta_min = (total_eta - total_elapsed_time) / 60
         secs = int((eta_min - int(eta_min)) * 60)
 
-        logger.info(f"ETA: {eta_min}m{secs}s; Avg. time per page: {mean_time:.2f}s.")
+        logger.info(f"ETA: {int(eta_min)}m{secs}s; Avg. time per page: {mean_time:.2f}s.")

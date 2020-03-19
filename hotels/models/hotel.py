@@ -1,12 +1,10 @@
 import os
 
-from hotels.utils.conf_reader import ConfReader
+from hotels.utils.conf import Conf
 
 
 class Hotel:
-    conf_reader = ConfReader()
-    conf = conf_reader.get("conf.ini")
-    root_url = os.path.dirname(conf["TRIP_ADVISOR"]["base_url"])
+    root_url = os.path.dirname(Conf()["TRIP_ADVISOR"]["base_url"])
 
     def __init__(self, name, rating, price, currency, detail_url, needs_root=True):
         self.is_complete = all([name, rating, price, detail_url])

@@ -3,32 +3,37 @@ import time
 
 from selenium import webdriver
 
+from hotels import Conf
 from hotels.proxy_pool import ProxyPool
 
 logger = logging.getLogger("Hotels")
 
 
-class WebDriver:
+class WebDriverTripAdvisor:
+    currency_wanted_symbol = Conf()["TRIP_ADVISOR"]["currency_wanted_symbol"]
+    currency_wanted_name = Conf()["TRIP_ADVISOR"]["currency_wanted_name"]
+    logger.debug(f"'{currency_wanted_name}', '{currency_wanted_symbol}'")
+
     @staticmethod
     def get(url, headless=True):
 
         while True:
             proxy_pool = ProxyPool()
             proxy = proxy_pool.get_proxy()
-            driver = WebDriver._get_driver(proxy=proxy, headless=headless)
+            driver = WebDriverTripAdvisor._get_driver(proxy=proxy, headless=headless)
 
             try:
                 driver.get(url)
 
-                if not WebDriver._check_page(driver):
+                if not WebDriverTripAdvisor._check_page(driver):
                     driver.quit()
                     proxy_pool.remove_proxy(proxy)
                     continue
 
-                WebDriver._change_currency(driver)
-                WebDriver._wait_prices(driver)
+                WebDriverTripAdvisor._change_currency(driver)
+                WebDriverTripAdvisor._wait_prices(driver)
 
-                if not WebDriver._check_page(driver):
+                if not WebDriverTripAdvisor._check_page(driver):
                     driver.quit()
                     proxy_pool.remove_proxy(proxy)
                     continue
@@ -52,7 +57,7 @@ class WebDriver:
             options.add_argument('--headless')
 
         driver = webdriver.Chrome(chrome_options=options)
-        # chrome.set_page_load_timeout(200)  # Wait n sec before giving up on loading page
+        driver.set_page_load_timeout(600)  # Wait n sec before giving up on loading page
         driver.set_window_size(width=1700, height=500)  # makes sure the layout is the one supported by the parsers.
         return driver
 
@@ -61,20 +66,21 @@ class WebDriver:
         try:
             cur = driver.find_element_by_xpath("//span[@class='currency_symbol']")
             logger.debug(f"Currency before change '{cur.text}'.")
-            if cur.text == "€":
+            if cur.text == WebDriverTripAdvisor.currency_wanted_symbol:
                 logger.info("No change in currency needed.")
                 return True
 
             time.sleep(2)
             driver.find_element_by_xpath("//div[@data-header='Currency']").click()
-            WebDriver._wait_currencies(driver)
+            WebDriverTripAdvisor._wait_currencies(driver)
 
-            euro = driver.find_element_by_xpath("//div[@class='currency_code' and text() = 'EUR']/parent::node()")
+            euro = driver.find_element_by_xpath(
+                f"//div[@class='currency_code' and text() = '{WebDriverTripAdvisor.currency_wanted_name}']"
+                f"/parent::node()")
             euro.click()
 
             # let time to request the new page, with new currency:
-            time.sleep(2)
-
+            time.sleep(5)
             logger.info("Change currency, success.")
             return True
 
@@ -84,24 +90,38 @@ class WebDriver:
 
     @staticmethod
     def _wait_prices(driver):
+        counter = 0
         time.sleep(2)
         while True:
+            counter += 1
             elts_loader = driver.find_elements_by_xpath("//span[@class='ui_loader small']")
             elts_wrapper = driver.find_elements_by_xpath("//div[@class='relWrap']")
-            if len(elts_loader) == 0 and len(elts_wrapper) != 0:
+            elts_footer = driver.find_elements_by_xpath(
+                "//div[@class='unified ui_pagination standard_pagination ui_section listFooter']"
+            )
+            if counter > 80:  # 160 sec
+                raise TimeoutError("prices loading timeout.")
+
+            if len(elts_loader) == 0 and len(elts_wrapper) != 0 and len(elts_footer) != 0:
                 logger.debug("Prices fully charged.")
                 break
+
             elif len(elts_wrapper) == 0:
-                logger.debug("currency window closing.")
-                time.sleep(2)
+                logger.debug("currency window closing, or page not loaded.")
+            elif len(elts_footer) == 0:
+                logger.debug("page is loading.")
             else:
                 logger.debug("prices are charging.")
-                time.sleep(2)
+            time.sleep(2)
 
     @staticmethod
     def _wait_currencies(driver):
+        loop_counter = 0
         while True:
             elts = driver.find_elements_by_xpath("//li[contains(@class, 'currency_item ui_link')]")
+            loop_counter += 1
+            if loop_counter > 45:  # 90sec
+                raise TimeoutError("currency changer window timeout")
             if len(elts) == 0:
                 logger.debug("currency changer window is not charged yet.")
                 time.sleep(2)
@@ -119,12 +139,11 @@ class WebDriver:
         """
         if not driver.current_url.startswith("https://www.tripadvisor.co.uk/Hotels-"):
             logger.warning(f"Driver redirected ; '{driver.current_url}'.")
-            logger.debug(driver.page_source)
             return False
-        if WebDriver._page_is_error(driver):
+        if WebDriverTripAdvisor._page_is_error(driver):
             logger.warning("Driver landed on an error page.")
             return False
-        if WebDriver._page_is_empty(driver):
+        if WebDriverTripAdvisor._page_is_empty(driver):
             logger.warning("Driver landed on an empty page.")
             return False
         return True

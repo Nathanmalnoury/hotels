@@ -7,11 +7,11 @@ import click
 
 from hotels.scrappers.tripadvisorscrapper import TripAdvisorScrapper
 from hotels.utils.click_utils import check_args, check_excel
-from hotels.utils.conf_reader import ConfReader
+from hotels.utils.conf import Conf
 from hotels.utils.hotels import save_as_excel
 from hotels.utils.misc import init
 
-conf = ConfReader.get("conf.ini")
+conf = Conf()
 logger = logging.getLogger("Hotels")
 
 
