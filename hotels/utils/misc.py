@@ -17,7 +17,7 @@ def init():
     proxy_scrapper = ProxyScrapper(url=conf["PROXY_WEBSITE"]["base_url"])
 
     logger.debug("Creating a proxy pool.")
-    pp = ProxyPool(proxy_scrapper.get_proxies())
+    ProxyPool(proxy_scrapper.get_proxies())
 
     logger.debug("Creating a currency exchanger.")
     CurrencyExchanger()

@@ -137,4 +137,7 @@ class TripAdvisorScrapper(Scrapper):
         total_elapsed_time = sum(times)
         mean_time = total_elapsed_time / page_done
         total_eta = page_max * mean_time
-        logger.info(f"Avg. time per page: {mean_time}, ETA: {total_eta - total_elapsed_time}")
+        eta_min = (total_eta - total_elapsed_time) / 60
+        secs = int((eta_min - int(eta_min)) * 60)
+
+        logger.info(f"ETA: {eta_min}m{secs}s; Avg. time per page: {mean_time:.2f}s.")
