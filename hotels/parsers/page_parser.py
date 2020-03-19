@@ -1,5 +1,7 @@
+import logging
 import re
 
+logger = logging.getLogger("Hotels")
 
 class PageParser:
     def __init__(self, str_page):
@@ -9,7 +11,9 @@ class PageParser:
         page_number = self.get_page_number()
         next_link = self.get_next_page_link()
         current_page = self.get_current_page_number()
-        return {'total_page': page_number, 'next_link': next_link, 'current_page': current_page}
+        info = {'total_page': page_number, 'next_link': next_link, 'current_page': current_page}
+        logger.debug(info)
+        return info
 
     def get_page_number(self):
         matcher = re.compile(r'data-numpages="\d+"')
@@ -33,7 +37,3 @@ class PageParser:
         tag = matcher.search(self.str_page).group()
         number = tag.split("\n")[1]
         return int(number.strip())
-
-    @classmethod
-    def parse(cls, driver):
-        pass

@@ -1,17 +1,19 @@
 import logging
 from itertools import cycle
 
-from singleton.singleton import Singleton
+from hotels.utils.singleton import singleton
 
 logger = logging.getLogger("Hotels")
 
 
-@Singleton
+@singleton
 class ProxyPool:
-    def __init__(self, proxies):
-        self.proxies = proxies
-        self.proxy_pool = self._create_pool()
-        logger.debug(f'ProxyPool created with {len(self.proxies)} proxies')
+    def __init__(self, proxies=None):
+        if proxies is not None:
+            self.proxies = proxies
+            self.proxy_pool = self._create_pool()
+            self.proxy_pool = self._create_pool()
+            logger.debug(f'ProxyPool initialized with {len(self.proxies)} proxies')
 
     def _create_pool(self):
         return cycle(self.proxies)

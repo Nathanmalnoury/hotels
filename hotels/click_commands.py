@@ -7,11 +7,11 @@ import click
 
 from hotels.scrappers.tripadvisorscrapper import TripAdvisorScrapper
 from hotels.utils.click_utils import check_args, check_excel
-from hotels.utils.conf_reader import ConfReader
+from hotels.utils.conf import Conf
 from hotels.utils.hotels import save_as_excel
 from hotels.utils.misc import init
 
-conf = ConfReader.get("conf.ini")
+conf = Conf()
 logger = logging.getLogger("Hotels")
 
 
@@ -34,7 +34,7 @@ def scrap(base_url, excel_path, show_browser, timeout):
     init()
     logger.info(f"Scrapping starts. Path to save excel: '{excel_path}'")
     start = time.time()
-    hotels = TripAdvisorScrapper.crawler(base_url=base_url, headless=not show_browser, load_timeout=timeout)
+    hotels = TripAdvisorScrapper.crawler(first_url=base_url, headless=not show_browser)
     save_as_excel(hotels, excel_path)
     end = time.time()
 

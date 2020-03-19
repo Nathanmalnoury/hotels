@@ -6,18 +6,20 @@ import random
 
 import pandas as pd
 import requests
-from singleton.singleton import Singleton
 
-from hotels.utils.conf_reader import ConfReader
 from hotels.proxy_pool import ProxyPool
+from hotels.utils.conf import Conf
+from hotels.utils.singleton import singleton
 
 logger = logging.getLogger("Hotels")
 
 
-@Singleton
+@singleton
 class CurrencyExchanger:
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) '
+                      'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'
+    }
     timeout = 20
 
     def __init__(self):
@@ -27,12 +29,12 @@ class CurrencyExchanger:
 
         self.exchange_rates = {}
 
-        conf = ConfReader.get("conf.ini")
+        conf = Conf()
         self.tokens = conf["CURRENCY_API"]["tokens"].split(",")
         self.base_url = conf["CURRENCY_API"]["base_url"]
 
     def _query(self, arg):
-        proxy_pool = ProxyPool.instance()
+        proxy_pool = ProxyPool()
         token = random.choice(self.tokens)
         while True:
             proxy = proxy_pool.get_proxy()

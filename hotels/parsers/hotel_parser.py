@@ -1,6 +1,7 @@
 import logging
 import re
 
+from hotels import Conf
 from hotels.currency_exchanger import CurrencyExchanger
 from hotels.models.hotel import Hotel
 
@@ -8,9 +9,11 @@ logger = logging.getLogger("Hotels")
 
 
 class HotelParser:
+    wanted_currency_name = Conf()["TRIP_ADVISOR"]["currency_wanted_name"]
+
     def __init__(self, str_hotel):
         self.str_hotel = str_hotel
-        self.converter = CurrencyExchanger.instance()
+        self.converter = CurrencyExchanger()
 
     def parser(self):
         name = self.get_hotel_name()
@@ -118,8 +121,8 @@ class HotelParser:
         amount = self.clean_amount(amount)
         try:
 
-            amount = self.converter.convert_price(price=amount, symb=symbol)
-            symbol = "EUR"
+            amount = self.converter.convert_price(price=amount, symb=symbol, money_to=HotelParser.wanted_currency_name)
+            symbol = HotelParser.wanted_currency_name
 
         except Exception as e:
             logger.error("Error while converting price")
