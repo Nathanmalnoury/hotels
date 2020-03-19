@@ -11,16 +11,16 @@ logger = logging.getLogger("Hotels")
 class WebDriver:
     @staticmethod
     def get(url, headless=True):
-        proxy_pool = ProxyPool.instance()
+
         while True:
+            proxy_pool = ProxyPool()
             proxy = proxy_pool.get_proxy()
             driver = WebDriver._get_driver(proxy=proxy, headless=headless)
 
             try:
                 driver.get(url)
 
-                if WebDriver.page_is_empty(driver) or WebDriver.page_is_error(driver):
-                    logger.debug("Empty page, or error page.")
+                if not WebDriver._check_page(driver):
                     driver.quit()
                     proxy_pool.remove_proxy(proxy)
                     continue
@@ -28,15 +28,7 @@ class WebDriver:
                 WebDriver._change_currency(driver)
                 WebDriver._wait_prices(driver)
 
-                if not driver.current_url.startswith("https://www.tripadvisor.co.uk/Hotels-"):
-                    logger.info("Browser has been redirected")
-                    driver.quit()
-                    proxy_pool.remove_proxy(proxy_pool)
-                    continue
-
-                if WebDriver.page_is_empty(driver) or WebDriver.page_is_error(driver):
-                    logger.warning("Error occurred while changing currency")
-                    logger.debug(driver.page_source)
+                if not WebDriver._check_page(driver):
                     driver.quit()
                     proxy_pool.remove_proxy(proxy)
                     continue
@@ -60,8 +52,8 @@ class WebDriver:
             options.add_argument('--headless')
 
         driver = webdriver.Chrome(chrome_options=options)
-        # chrome.set_page_load_timeout(load_timeout)  # Wait n sec before giving up on loading page
-        driver.set_window_size(width=1700, height=500)
+        # chrome.set_page_load_timeout(200)  # Wait n sec before giving up on loading page
+        driver.set_window_size(width=1700, height=500)  # makes sure the layout is the one supported by the parsers.
         return driver
 
     @staticmethod
@@ -80,9 +72,7 @@ class WebDriver:
             euro = driver.find_element_by_xpath("//div[@class='currency_code' and text() = 'EUR']/parent::node()")
             euro.click()
 
-            print(type(euro), type(driver))
-
-            # closes window:
+            # let time to request the new page, with new currency:
             time.sleep(2)
 
             logger.info("Change currency, success.")
@@ -120,7 +110,27 @@ class WebDriver:
                 break
 
     @staticmethod
-    def page_is_error(driver):
+    def _check_page(driver):
+        """
+
+        :param driver:
+        :return: True if page is as expected, false otherwise
+        :rtype: bool
+        """
+        if not driver.current_url.startswith("https://www.tripadvisor.co.uk/Hotels-"):
+            logger.warning(f"Driver redirected ; '{driver.current_url}'.")
+            logger.debug(driver.page_source)
+            return False
+        if WebDriver._page_is_error(driver):
+            logger.warning("Driver landed on an error page.")
+            return False
+        if WebDriver._page_is_empty(driver):
+            logger.warning("Driver landed on an empty page.")
+            return False
+        return True
+
+    @staticmethod
+    def _page_is_error(driver):
         err_detector = ["Privacy error", "error-information-button", "ERR_"]
         for err in err_detector:
             if err in driver.page_source:
@@ -128,7 +138,7 @@ class WebDriver:
         return False
 
     @staticmethod
-    def page_is_empty(driver):
+    def _page_is_empty(driver):
         page = driver.page_source
         if page == "<html><head></head><body></body></html>":
             return True

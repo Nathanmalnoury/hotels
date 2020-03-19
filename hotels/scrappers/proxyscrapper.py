@@ -33,7 +33,7 @@ class ProxyScrapper(Scrapper):
         list_proxies = list(proxies)
         list_proxies.sort(key=lambda prox: dict_tmp[prox])
 
-        logger.info(f"found {len(proxies)} proxies.")
+        logger.debug(f"found {len(proxies)} proxies.")
         self.list_proxies = list_proxies
 
     @staticmethod

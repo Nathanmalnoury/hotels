@@ -10,7 +10,7 @@ logger = logging.getLogger("Hotels")
 class HotelParser:
     def __init__(self, str_hotel):
         self.str_hotel = str_hotel
-        self.converter = CurrencyExchanger.instance()
+        self.converter = CurrencyExchanger()
 
     def parser(self):
         name = self.get_hotel_name()

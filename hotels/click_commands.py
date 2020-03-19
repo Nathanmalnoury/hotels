@@ -34,7 +34,7 @@ def scrap(base_url, excel_path, show_browser, timeout):
     init()
     logger.info(f"Scrapping starts. Path to save excel: '{excel_path}'")
     start = time.time()
-    hotels = TripAdvisorScrapper.crawler(first_url=base_url, headless=not show_browser, load_timeout=timeout)
+    hotels = TripAdvisorScrapper.crawler(first_url=base_url, headless=not show_browser)
     save_as_excel(hotels, excel_path)
     end = time.time()
 

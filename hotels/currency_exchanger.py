@@ -6,18 +6,20 @@ import random
 
 import pandas as pd
 import requests
-from singleton.singleton import Singleton
 
 from hotels.utils.conf_reader import ConfReader
 from hotels.proxy_pool import ProxyPool
+from hotels.utils.singleton import singleton
 
 logger = logging.getLogger("Hotels")
 
 
-@Singleton
+@singleton
 class CurrencyExchanger:
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) '
+                      'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'
+    }
     timeout = 20
 
     def __init__(self):

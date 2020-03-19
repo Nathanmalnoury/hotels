@@ -15,11 +15,10 @@ logger = logging.getLogger("Hotels")
 
 
 class TripAdvisorScrapper(Scrapper):
-    def __init__(self, url, headless=True, load_timeout=200):
+    def __init__(self, url, headless=True):
         super().__init__(url)
         self.root_url = os.path.dirname(url)
         self.headless = headless
-        self.load_timeout = load_timeout
 
     def get_page_info(self):
         soup = BeautifulSoup(self.page, "html.parser")
@@ -28,7 +27,7 @@ class TripAdvisorScrapper(Scrapper):
             return PageParser(str(card.prettify())).get_info()
         else:
             logger.error("no footer found.")
-            print(soup)
+            logger.debug(soup)
             return None
 
     def hotels_info(self):
@@ -80,40 +79,62 @@ class TripAdvisorScrapper(Scrapper):
         return data
 
     @staticmethod
-    def crawler(first_url, data=None, headless=True, load_timeout=200):
+    def crawler(first_url, data=None, headless=True):
         if data is not None:
             hotels = data["hotels"]
         else:
             hotels = []
 
-        next_url = "undefined"
-        url = first_url
-        logger.info("Crawling starts")
+        next_url = first_url
+        logger.debug("Crawling starts")
+        times = []
 
         while next_url is not None:
-            scrapper = TripAdvisorScrapper(url, headless=headless, load_timeout=load_timeout)
-
-            start = time.time()
-            scrapper.page = WebDriver.get(url=scrapper.url, headless=scrapper.headless)
-            found_hotels = scrapper.hotels_info()
-            next_info = scrapper.get_page_info()
-            elapsed_time = time.time() - start
-            logger.debug(next_info)
-
-            logger.info(f"Process one page in {elapsed_time:.2f} s.")
-
-            hotels += found_hotels
-            current_page = next_info.get("current_page")
-            page_max = next_info.get("total_page")
-            next_url = next_info.get("next_link", None)
-
-            TripAdvisorScrapper.save_updates(dict([("hotels", hotels)], **next_info), current_page)
-
-            logger.info(f"Crawled Page {current_page}/{page_max}. Url : '{url}'. "
-                        f"Found {len(hotels)} hotels in total, {len(found_hotels)} new ones.")
-
+            next_url, elapsed_time, current_page, page_max = TripAdvisorScrapper.process_one_page(next_url,
+                                                                                                  headless,
+                                                                                                  hotels)
+            times.append(elapsed_time)
+            TripAdvisorScrapper.compute_eta(times, page_max)
             if next_url is None:
                 break
-            else:
-                url = scrapper.root_url + next_url
+            
         return hotels
+
+    @staticmethod
+    def process_one_page(url, headless, hotels):
+        scrapper = TripAdvisorScrapper(url, headless=headless)
+
+        start = time.time()
+        scrapper.page = WebDriver.get(url=scrapper.url, headless=scrapper.headless)
+        found_hotels = scrapper.hotels_info()
+        next_info = scrapper.get_page_info()
+        elapsed_time = time.time() - start
+
+        hotels += found_hotels
+        current_page = next_info.get("current_page")
+        page_max = next_info.get("total_page")
+        next_url = next_info.get("next_link", None)
+        if next_url is not None:
+            next_url = scrapper.root_url + next_url
+
+        TripAdvisorScrapper.save_updates(dict([("hotels", hotels)], **next_info), current_page)
+
+        logger.info(
+            f"Scrapped Page {current_page}/{page_max}. Found {len(found_hotels)} hotels, {len(hotels)} in total."
+        )
+
+        return next_url, elapsed_time, current_page, page_max
+
+    @staticmethod
+    def compute_eta(times, page_max):
+        """
+        :type times: list of float
+        :type current_page: int
+        :type page_max: int
+        :return: None
+        """
+        page_done = len(times)
+        total_elapsed_time = sum(times)
+        mean_time = total_elapsed_time / page_done
+        total_eta = page_max * mean_time
+        logger.info(f"Avg. time per page: {mean_time}, ETA: {total_eta - total_elapsed_time}")

@@ -15,7 +15,7 @@ class Scrapper:
     timeout = 20
 
     def __init__(self, url):
-        logger.info(f"Scrapper initialised with url '{url}'")
+        logger.debug(f"Scrapper initialised with url '{url}'")
         self.url = url
         self.page = None
         self.soup = None
