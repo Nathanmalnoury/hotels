@@ -1,3 +1,9 @@
+"""Scrapper for TripAdvisor
+
+This module is responsible for orchestrating the scrapping.
+It uses the parsers and the WebDriver classes to load the page, change the currency and finally get the results.
+It supports saving the data, as well as getting the data back from previous saves.
+"""
 import json
 import logging
 import os
