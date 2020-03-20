@@ -40,7 +40,7 @@ class HotelParser:
             tag = tag_matcher.search(self.str_hotel).group()
             lines = tag.split("\n")
             return lines[1].strip()
-        except:
+        except Exception:
             logger.warning("Hotel name not found")
             return None
 
@@ -54,7 +54,7 @@ class HotelParser:
             first_number = ratings[0][1:]  # matches on '"4.5', we have to remove "
             last_number = ratings[2]
             return f"{first_number}/{last_number}"
-        except:
+        except Exception:
             votes = self.get_votes()
             if votes is not None and votes == 0:
                 return "No votes"
@@ -93,7 +93,7 @@ class HotelParser:
             link = url_matcher.search(tag).group()
             link = link.split("\"")[1]
             return link
-        except:
+        except Exception:
             logger.error("Get detail url failed.")
             return None
 
@@ -116,7 +116,7 @@ class HotelParser:
             count = count.split()
             return int(count[0])
 
-        except:
+        except Exception:
             logger.warning("No review count found")
             return None
 
