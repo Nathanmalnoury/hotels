@@ -41,6 +41,11 @@ def set_logger():
     # create file handler which logs even debug messages
     path_conf = os.path.join(Conf()["TRIP_ADVISOR"]["log_dir"], "hotels.log")
 
+    if not os.path.isfile(path=path_conf):
+        # creates the file if it does not exist
+        with open(path_conf, "w+"):
+            pass
+
     fh = logging.FileHandler(path_conf, mode="a+", encoding="utf-8")
     fh.setLevel(logging.DEBUG)
     fh.setFormatter(CustomFormatterFile())
