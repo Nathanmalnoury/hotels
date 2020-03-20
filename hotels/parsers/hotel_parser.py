@@ -1,3 +1,4 @@
+"""Hotel parser for TripAdvisor UK."""
 import logging
 import re
 
@@ -9,13 +10,22 @@ logger = logging.getLogger("Hotels")
 
 
 class HotelParser:
+    """Parser to retrieve hotel data."""
+
     wanted_currency_name = Conf()["TRIP_ADVISOR"]["currency_wanted_name"]
 
     def __init__(self, str_hotel):
+        """
+        Init.
+
+        :param str_hotel: prettified hotel html
+        :type str_hotel: str
+        """
         self.str_hotel = str_hotel
         self.converter = CurrencyExchanger()
 
     def parser(self):
+        """Parse name, rating, price and detail url from an hotel."""
         name = self.get_hotel_name()
         rating = self.get_rating()
         price, currency = self.get_price()
@@ -24,6 +34,7 @@ class HotelParser:
         return Hotel(name=name, rating=rating, price=price, currency=currency, detail_url=detail_url)
 
     def get_hotel_name(self):
+        """Parse name of an hotel from an hotel."""
         try:
             tag_matcher = re.compile(r'<a class="property_title prominent"[\w\W]*?</a>')
             tag = tag_matcher.search(self.str_hotel).group()
@@ -34,6 +45,7 @@ class HotelParser:
             return None
 
     def get_rating(self):
+        """Parse rating for an hotel."""
         try:
             tag_matcher = re.compile(r'<.*data-clicksource="BubbleRating"[\w\W]+?</a>')
             tag = tag_matcher.search(self.str_hotel).group()
@@ -51,6 +63,7 @@ class HotelParser:
                 return None
 
     def get_price(self):
+        """Parse price for an hotel."""
         tag_matcher = re.compile(r'<div .* data-sizegroup="mini-meta-price"[\w\W]+?</div>')
         for tag in re.finditer(tag_matcher, self.str_hotel):
             try:
@@ -72,6 +85,7 @@ class HotelParser:
         return None, None
 
     def get_detail_url(self):
+        """Parse the url to the detail page of an hotel."""
         try:
             tag_matcher = re.compile(r'<div class="photo-wrapper">[\w\W]*?href=".*"')
             tag = tag_matcher.search(self.str_hotel).group()
@@ -85,6 +99,7 @@ class HotelParser:
 
     @staticmethod
     def clean_amount(amount):
+        """Clean an price."""
         # original amount "13,082.63" or "13 082.36"
         # converts to float: 13082.63
         amount = amount.replace(",", "")
@@ -92,6 +107,7 @@ class HotelParser:
         return float(amount)
 
     def get_votes(self):
+        """Parse votes for an hotel."""
         matcher = re.compile(r'<a.*"review_count[\w\W]+?</a>')
         try:
             tag = matcher.search(self.str_hotel).group()
@@ -105,6 +121,7 @@ class HotelParser:
             return None
 
     def no_price_available(self):
+        """Detect if a price is not available on TripAdvisor."""
         matcher = re.compile(r'<div class="note">\n\s+Contact accommodation for availability.')
         match = matcher.search(self.str_hotel)
         if match.group() is not None:
@@ -112,6 +129,14 @@ class HotelParser:
         return False
 
     def price_parser(self, lines):
+        """
+        Find, parses and convert price.
+
+        :param lines: line from HTML corresponding to the price placeholder.
+        :type lines: list
+        :return: amount, price
+        :rtype: (int, str)
+        """
         price = lines[1].strip()
         price_finder = re.compile(r'([\d,. ])+')
         amount = price_finder.search(price).group()

@@ -1,3 +1,4 @@
+"""Driver for TripAdvisor Scrapping."""
 import logging
 import time
 
@@ -6,38 +7,60 @@ from selenium import webdriver
 from hotels import Conf
 from hotels.proxy_pool import ProxyPool
 from hotels.utils.misc import write_html_error
+
 logger = logging.getLogger("Hotels")
 
 
 class WebDriverTripAdvisor:
+    """WebDriver based on selenium."""
+
     currency_wanted_symbol = Conf()["TRIP_ADVISOR"]["currency_wanted_symbol"]
     currency_wanted_name = Conf()["TRIP_ADVISOR"]["currency_wanted_name"]
 
     @staticmethod
     def get(url, headless=True):
+        """
+        Get a TripAdvisor UK url.
 
+        Executes a change in currency where needed, and waits for prices to charge.
+        Verifies that the returned page is adequate to what the scrappers are expecting.
+
+        :param url: url
+        :type url: str
+        :param headless: whether to show the driver to the user or not.
+        :type headless: bool
+        :return: page
+        """
         while True:
             proxy_pool = ProxyPool()
             proxy = proxy_pool.get_proxy()
             driver = WebDriverTripAdvisor._get_driver(proxy=proxy, headless=headless)
 
             try:
+                s = time.time()
                 driver.get(url)
+                logger.debug(f"Get took {time.time() - s:.2f}s.")
+                time.sleep(5)
+                WebDriverTripAdvisor._handle_redirect(driver=driver)
 
                 if not WebDriverTripAdvisor._check_page(driver):
-                    driver.quit()
-                    proxy_pool.remove_proxy(proxy)
+                    WebDriverTripAdvisor._close(driver, proxy)
                     continue
 
                 WebDriverTripAdvisor._change_currency(driver)
-                WebDriverTripAdvisor._wait_prices(driver)
 
-                if not WebDriverTripAdvisor._check_page(driver):
-                    driver.quit()
-                    proxy_pool.remove_proxy(proxy)
+                try:
+                    WebDriverTripAdvisor._wait_prices(driver)
+                except TimeoutError:
+                    logger.info("Prices did not charge in timeout limit.")
+                    WebDriverTripAdvisor._close(driver, proxy)
                     continue
 
-                logger.debug(f"Request is a success, for page '{driver.current_url}'")
+                if not WebDriverTripAdvisor._check_page(driver):
+                    WebDriverTripAdvisor._close(driver, proxy)
+                    continue
+
+                logger.debug(f"Request is a success, for page '{driver.current_url}'. Took {time.time() - s:.2f}s.")
                 page = driver.page_source
 
                 driver.quit()
@@ -46,8 +69,7 @@ class WebDriverTripAdvisor:
             except Exception as e:
                 logger.exception(e)
                 write_html_error(html_page=driver.page_source)
-                driver.quit()
-                proxy_pool.remove_proxy(proxy)
+                WebDriverTripAdvisor._close(driver, proxy)
 
     @staticmethod
     def _get_driver(proxy, headless):
@@ -57,9 +79,21 @@ class WebDriverTripAdvisor:
             options.add_argument('--headless')
 
         driver = webdriver.Chrome(chrome_options=options)
-        driver.set_page_load_timeout(600)  # Wait n sec before giving up on loading page
+        driver.set_page_load_timeout(300)  # Wait 5 min before giving up on loading page
         driver.set_window_size(width=1700, height=500)  # makes sure the layout is the one supported by the parsers.
         return driver
+
+    @staticmethod
+    def _handle_redirect(driver):
+        continue_element = driver.find_elements_by_xpath(
+            "//span[contains(text(),'Continue your visit to www.tripadvisor.co.uk')]"
+        )
+        if len(continue_element) != 0:
+            logger.info("detected a redirection.")
+            continue_element[0].click()
+            time.sleep(5)
+        else:
+            logger.debug("no redirection found.")
 
     @staticmethod
     def _change_currency(driver):
@@ -86,7 +120,7 @@ class WebDriverTripAdvisor:
 
         except Exception as e:
             logger.warning(f"Change currency, fail due to {e.__class__}.")
-
+            write_html_error(driver.page_source)
             return False
 
     @staticmethod
@@ -101,7 +135,7 @@ class WebDriverTripAdvisor:
                 "//div[@class='unified ui_pagination standard_pagination ui_section listFooter']"
             )
 
-            if counter > 80:  # 160 sec
+            if counter > 60:  # 120 sec
                 raise TimeoutError("prices loading timeout.")
 
             if len(elts_loader) == 0 and len(elts_wrapper) != 0 and len(elts_footer) != 0:
@@ -134,8 +168,12 @@ class WebDriverTripAdvisor:
     @staticmethod
     def _check_page(driver):
         """
+        Run check on page.
 
-        :param driver:
+        Runs redirect detection, _page_is_error and _page_is_empty.
+
+        :param driver: driver
+        :type driver: webdriver.Chrome
         :return: True if page is as expected, false otherwise
         :rtype: bool
         """
@@ -153,6 +191,7 @@ class WebDriverTripAdvisor:
 
     @staticmethod
     def _page_is_error(driver):
+        """Check if page is an error page."""
         err_detector = ["Privacy error", "error-information-button", "ERR_"]
         for err in err_detector:
             if err in driver.page_source:
@@ -161,6 +200,7 @@ class WebDriverTripAdvisor:
 
     @staticmethod
     def _page_is_empty(driver):
+        """Check if page is empty."""
         page = driver.page_source
         if page == "<html><head></head><body></body></html>":
             return True
@@ -170,3 +210,8 @@ class WebDriverTripAdvisor:
             return True
         else:
             return False
+
+    @staticmethod
+    def _close(driver, proxy):
+        driver.quit()
+        ProxyPool().remove_proxy(proxy)
