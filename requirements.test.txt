@@ -9,3 +9,4 @@ openpyxl
 xlrd
 selenium
 pylama
+pytest
