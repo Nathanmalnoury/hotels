@@ -4,6 +4,7 @@ This module is responsible for orchestrating the scrapping.
 It uses the parsers and the WebDriver classes to load the page, change the currency and finally get the results.
 It supports saving the data, as well as getting the data back from previous saves.
 """
+import datetime
 import json
 import logging
 import os
@@ -183,7 +184,8 @@ class TripAdvisorScrapper(Scrapper):
         total_elapsed_time = sum(times)
         mean_time = total_elapsed_time / page_done
         total_eta = page_max * mean_time
-        eta_min = (total_eta - total_elapsed_time) / 60
-        secs = int((eta_min - int(eta_min)) * 60)
+        eta_s = (total_eta - total_elapsed_time)
+        eta_human_readable = str(datetime.timedelta(seconds=eta_s))
+        mean_time_human_readable = str(datetime.timedelta(seconds=mean_time))
 
-        logger.info(f"ETA: {int(eta_min)}m{secs}s; Avg. time per page: {mean_time:.2f}s.")
+        logger.info(f"ETA: {eta_human_readable}; Avg. time per page: {mean_time_human_readable}s.")
