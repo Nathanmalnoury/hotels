@@ -28,7 +28,7 @@ class Conf(object):
 
         This only work if the conf file is in the root of the project folder !!
         :param filename: name of the conf fileDB
-        :type filename: str
+        :type filename: strConf
         :return: dict with the default values
         :rtype: dict
         """
