@@ -23,17 +23,18 @@ class PageParser:
 
     def get_next_page_link(self):
         try:
-            matcher = re.compile(r'<a class="nav next ui_button primary[\w\W]+?</a>')
+            matcher = re.compile(r'<.*class="nav next ui_button primary[\w\W]+?</')
             tag = matcher.search(self.str_page).group()
-            href_matcher = re.compile(r'href=".*?"')
+            href_matcher = re.compile(r"'/.*?\.html'")
             href = href_matcher.search(tag).group()
-            href = href.split("\"")
+            href = href.split("\'")
+            logger.debug(href)
             return href[1]
         except:
             return None
 
     def get_current_page_number(self):
-        matcher = re.compile(r'.* current [\w\W]+?</a>')
+        matcher = re.compile(r'<.* current [\w\W]+?</')
         tag = matcher.search(self.str_page).group()
         number = tag.split("\n")[1]
         return int(number.strip())

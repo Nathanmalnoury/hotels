@@ -16,6 +16,7 @@ from hotels.parsers.page_parser import PageParser
 from hotels.scrappers.scrapper import Scrapper
 from hotels.scrappers.web_driver import WebDriverTripAdvisor
 from hotels.utils.conf import Conf
+from hotels.utils.misc import write_html_error
 
 logger = logging.getLogger("Hotels")
 
@@ -33,7 +34,7 @@ class TripAdvisorScrapper(Scrapper):
             return PageParser(str(card.prettify())).get_info()
         else:
             logger.error("no footer found.")
-            logger.debug(soup)
+            write_html_error(self.page)
             return None
 
     def hotels_info(self):

@@ -1,8 +1,9 @@
+"""Log formatters."""
 import logging
 
 
 class CustomFormatterStream(logging.Formatter):
-    """Logging Formatter to add colors and count warning / errors"""
+    """Logging Formatter to add colors and count warning / errors."""
 
     grey = "\x1b[38;1m"
     yellow = "\x1b[33;1m"
@@ -22,12 +23,15 @@ class CustomFormatterStream(logging.Formatter):
     }
 
     def format(self, record):
+        """Overwrite format."""
         log_fmt = self.FORMATS.get(record.levelno)
         formatter = logging.Formatter(log_fmt)
         return formatter.format(record)
 
 
 class CustomFormatterFile(logging.Formatter):
+    """Logging Formatter to add warning / errors in a easily parsable log."""
+
     reset = "\x1b[0m"
     format = '%(asctime)s|%(levelname)s|%(filename)s-l%(lineno)d|%(message)s'
     datefmt = "%H:%M:%S"
@@ -41,6 +45,7 @@ class CustomFormatterFile(logging.Formatter):
     }
 
     def format(self, record):
+        """Overwrite format."""
         log_fmt = self.FORMATS.get(record.levelno)
         formatter = logging.Formatter(log_fmt)
         return formatter.format(record)

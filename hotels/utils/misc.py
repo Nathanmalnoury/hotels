@@ -1,5 +1,7 @@
+"""Functions useful for the rest of the algorithm."""
 import logging
 import os
+from datetime import datetime
 
 from hotels.currency_exchanger import CurrencyExchanger
 from hotels.proxy_pool import ProxyPool
@@ -11,6 +13,14 @@ logger = logging.getLogger("Hotels")
 
 
 def init():
+    """
+    Initialize the classes needed for the software.
+
+    ie. ProxyPool instance and a Currency exchanger instance.
+
+    :return: conf
+    :rtype hotels.utils.conf.Conf:
+    """
     conf = Conf()
 
     logger.debug("Searching proxies.")
@@ -25,6 +35,7 @@ def init():
 
 
 def set_logger():
+    """Set up logger for stream and file logs."""
     logger_ = logging.getLogger('Hotels')
     logger_.setLevel(logging.DEBUG)
     # create file handler which logs even debug messages
@@ -42,3 +53,15 @@ def set_logger():
     # add the handlers to the logger
     logger_.addHandler(fh)
     logger_.addHandler(ch)
+
+
+def write_html_error(html_page):
+    """Take an html and write it to the log directory."""
+    now = datetime.now().strftime("%d-%m-%H:%M:%S")
+    path_log = Conf()["TRIP_ADVISOR"]["log_dir"]
+    path = os.path.join(path_log, f"error_{now}.html")
+
+    with open(path, "w+") as f:
+        f.write(html_page)
+
+    logger.debug(f"html error written in {path}")

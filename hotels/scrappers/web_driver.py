@@ -5,14 +5,13 @@ from selenium import webdriver
 
 from hotels import Conf
 from hotels.proxy_pool import ProxyPool
-
+from hotels.utils.misc import write_html_error
 logger = logging.getLogger("Hotels")
 
 
 class WebDriverTripAdvisor:
     currency_wanted_symbol = Conf()["TRIP_ADVISOR"]["currency_wanted_symbol"]
     currency_wanted_name = Conf()["TRIP_ADVISOR"]["currency_wanted_name"]
-    logger.debug(f"'{currency_wanted_name}', '{currency_wanted_symbol}'")
 
     @staticmethod
     def get(url, headless=True):
@@ -45,9 +44,10 @@ class WebDriverTripAdvisor:
                 return page
 
             except Exception as e:
+                logger.exception(e)
+                write_html_error(html_page=driver.page_source)
                 driver.quit()
                 proxy_pool.remove_proxy(proxy)
-                logger.exception(e)
 
     @staticmethod
     def _get_driver(proxy, headless):
@@ -86,6 +86,7 @@ class WebDriverTripAdvisor:
 
         except Exception as e:
             logger.warning(f"Change currency, fail due to {e.__class__}.")
+
             return False
 
     @staticmethod
@@ -99,6 +100,7 @@ class WebDriverTripAdvisor:
             elts_footer = driver.find_elements_by_xpath(
                 "//div[@class='unified ui_pagination standard_pagination ui_section listFooter']"
             )
+
             if counter > 80:  # 160 sec
                 raise TimeoutError("prices loading timeout.")
 
@@ -139,6 +141,7 @@ class WebDriverTripAdvisor:
         """
         if not driver.current_url.startswith("https://www.tripadvisor.co.uk/Hotels-"):
             logger.warning(f"Driver redirected ; '{driver.current_url}'.")
+            write_html_error(driver.page_source)
             return False
         if WebDriverTripAdvisor._page_is_error(driver):
             logger.warning("Driver landed on an error page.")
