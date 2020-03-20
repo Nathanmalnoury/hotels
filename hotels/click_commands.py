@@ -1,3 +1,4 @@
+"""CLI commands, using click."""
 import glob
 import logging
 import os
@@ -17,6 +18,7 @@ logger = logging.getLogger("Hotels")
 
 @click.group()
 def scrapper():
+    """Scrapper click group of commands."""
     pass
 
 
@@ -27,9 +29,8 @@ def scrapper():
               default=conf["TRIP_ADVISOR"]["excel_path"])
 @click.option("--show-browser", is_flag=True, help="Open the browser and show it to the user.",
               default=False)
-@click.option("--timeout", type=int, help="Time to wait for the page to charge before trying another proxy..",
-              default=120)
-def scrap(base_url, excel_path, show_browser, timeout):
+def scrap(base_url, excel_path, show_browser):
+    """Scrap a TripAdvisor page, get all pages available starting with the base-url."""
     check_args(base_url, excel_path)
     init()
     logger.info(f"Scrapping starts. Path to save excel: '{excel_path}'")
@@ -48,6 +49,7 @@ def scrap(base_url, excel_path, show_browser, timeout):
 @click.option("--excel-path", type=str, help="Path to save the excel sheet. Use conf.ini by default",
               default=conf["TRIP_ADVISOR"]["excel_path"])
 def restart_from_save(page, excel_path):
+    """Recover data from a save and start scrapping based on the saved information."""
     check_excel(excel_path)
     init()
     data = TripAdvisorScrapper.roll_back_from_save(page)
@@ -64,6 +66,7 @@ def restart_from_save(page, excel_path):
 
 @scrapper.command(help="show saved files.")
 def saves():
+    """Show saved files."""
     path = conf["TRIP_ADVISOR"]["save_dir"]
     list_of_files = glob.glob(path + '*')  # * means all if need specific format then *.csv
     list_of_files.sort(key=os.path.getctime, reverse=True)

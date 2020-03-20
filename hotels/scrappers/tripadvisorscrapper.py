@@ -1,4 +1,4 @@
-"""Scrapper for TripAdvisor
+"""Scrapper for TripAdvisor.
 
 This module is responsible for orchestrating the scrapping.
 It uses the parsers and the WebDriver classes to load the page, change the currency and finally get the results.
@@ -22,12 +22,21 @@ logger = logging.getLogger("Hotels")
 
 
 class TripAdvisorScrapper(Scrapper):
+    """Scrapped for TripAdvisor UK Hotel pages."""
+
     def __init__(self, url, headless=True):
+        """
+        Init.
+
+        :param url: url to scrap.
+        :param headless: Whether or not to show the user the browser.
+        """
         super().__init__(url)
         self.root_url = os.path.dirname(url)
         self.headless = headless
 
     def get_page_info(self):
+        """Get Page information using PageParser."""
         soup = BeautifulSoup(self.page, "html.parser")
         card = soup.find("div", {"class": "unified ui_pagination standard_pagination ui_section listFooter"})
         if card is not None:
@@ -38,6 +47,7 @@ class TripAdvisorScrapper(Scrapper):
             return None
 
     def hotels_info(self):
+        """Get hotels information using HotelParser."""
         soup = BeautifulSoup(self.page, "html.parser")
         cards = soup.find_all("div", {"class": "prw_rup prw_meta_hsx_responsive_listing ui_section listItem"})
         info = []
@@ -55,6 +65,7 @@ class TripAdvisorScrapper(Scrapper):
     @staticmethod
     def save_updates(data, page):
         """
+        Save the current scrapped data.
 
         :param data: data to save
         :type data: dict
@@ -73,6 +84,7 @@ class TripAdvisorScrapper(Scrapper):
     @staticmethod
     def roll_back_from_save(page):
         """
+        Get back the data scraped from a previous aborted crawl.
 
         :param page: page number to retrieve json file with
         :type page: int
@@ -87,6 +99,19 @@ class TripAdvisorScrapper(Scrapper):
 
     @staticmethod
     def crawler(first_url, data=None, headless=True):
+        """
+        Crawls to all the next pages of a requested url.
+
+        If first_url is the first page of the request, it crawls every hotels.
+
+        :param first_url: url
+        :type first_url:url
+        :param data: optionnal already scrapped data, from an aborted previous scrap.
+        :type data: dict
+        :param headless: whether or not to show the user the browser.
+        :return: list of Hotel
+        :rtype list[hotels.models.hotel.Hotel]:
+        """
         if data is not None:
             hotels = data["hotels"]
         else:
@@ -104,11 +129,22 @@ class TripAdvisorScrapper(Scrapper):
             TripAdvisorScrapper.compute_eta(times, page_max)
             if next_url is None:
                 break
-            
+
         return hotels
 
     @staticmethod
     def process_one_page(url, headless, hotels):
+        """
+        Get, Scrap and parse one page.
+
+        :param url: url to process.
+        :type url: str
+        :param headless: whether or not to show the browser to the user.
+        :type headless: bool
+        :param hotels: list of previously parsed hotels.
+        :type hotels: list[Hotel]
+        :return: next_url, elapsed_time, current_page, page_max
+        """
         scrapper = TripAdvisorScrapper(url, headless=headless)
 
         start = time.time()
@@ -136,6 +172,8 @@ class TripAdvisorScrapper(Scrapper):
     @staticmethod
     def compute_eta(times, page_max):
         """
+        Compute Estimated Time of Arrival for the crawler.
+
         :type times: list of float
         :type current_page: int
         :type page_max: int

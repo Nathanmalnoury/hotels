@@ -1,3 +1,8 @@
+"""
+Init.
+
+Loads Conf singleton and set up the logger.
+"""
 import logging
 
 from hotels.utils.conf import Conf
