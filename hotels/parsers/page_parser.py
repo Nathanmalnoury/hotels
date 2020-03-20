@@ -36,14 +36,11 @@ class PageParser:
         """Get the url to the next page from HTML."""
         try:
             matcher = re.compile(r'<.*class="nav next ui_button primary[\w\W]+?</')
-            all = matcher.findall(self.str_page)
-            logger.info(all)
             tag = matcher.search(self.str_page).group()
             href_matcher = re.compile(r"'/.*?\.html'")
             href = href_matcher.search(tag).group()
             logger.info(href)
             href = href.split("\'")
-            logger.debug(href)
             return href[1]
         except:
             return None
