@@ -18,6 +18,7 @@ from hotels.scrappers.scrapper import Scrapper
 from hotels.scrappers.web_driver import WebDriverTripAdvisor
 from hotels.utils.conf import Conf
 from hotels.utils.misc import write_html_error
+from hotels.models.hotel import Hotel
 
 logger = logging.getLogger("Hotels")
 
@@ -96,6 +97,10 @@ class TripAdvisorScrapper(Scrapper):
         path = os.path.join(TripAdvisorScrapper._get_save_dir(), f"save_page_{page}.json")
         with open(path, "r") as f:
             data = json.load(f)
+        hotels = data.get("hotels")
+        if hotels is not None:
+            hotels = Hotel.from_json(hotels)
+        data["hotels"] = hotels
         return data
 
     @staticmethod
