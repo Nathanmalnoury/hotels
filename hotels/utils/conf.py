@@ -12,6 +12,7 @@ class Conf(object):
     """Util class that reads the conf."""
 
     def __init__(self, file_name=None):
+        """Initialise Conf object."""
         if file_name is not None:
             self.conf = self._load(file_name)
 
@@ -42,7 +43,26 @@ class Conf(object):
         return data
 
     def get(self, key, default=None):
+        """
+        Implement a dict-like get.
+
+        Get is done on self.conf, which is a dict(sections, {section data}).
+        :param key: key to sea
+        :type key: str
+        :param default: to return if key is not found. default: None
+        :return: section dict
+        :rtype: dict
+        """
         return self.conf.get(key, default)
 
     def __getitem__(self, item):
+        """
+        Implement getitem, to make Conf behave like a dict.
+
+        Searches into self.conf, which is a dict(sections, {section data}).
+        :param item: name of the item to find
+        :type item: str
+        :return result, as a dict
+        :rtype: dict
+        """
         return self.conf.get(item)
