@@ -1,0 +1,11 @@
+click
+pysingleton
+numpy
+lxml
+beautifulsoup4
+requests
+pandas
+openpyxl
+xlrd
+selenium
+pylama
