@@ -61,8 +61,7 @@ class TripAdvisorScrapper(Scrapper):
 
     @staticmethod
     def _get_save_dir():
-        conf = Conf()
-        return conf["TRIP_ADVISOR"]["save_dir"]
+        return Conf().get_path("TRIP_ADVISOR", "save_dir")
 
     @staticmethod
     def save_updates(data, page):

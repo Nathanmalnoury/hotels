@@ -67,7 +67,7 @@ def restart_from_save(page, excel_path):
 @scrapper.command(help="show saved files.")
 def saves():
     """Show saved files."""
-    path = conf["TRIP_ADVISOR"]["save_dir"]
+    path = conf.get_path("TRIP_ADVISOR", "save_dir")
     list_of_files = glob.glob(path + '*')  # * means all if need specific format then *.csv
     list_of_files.sort(key=os.path.getctime, reverse=True)
     for path in list_of_files:

@@ -39,7 +39,7 @@ def set_logger():
     logger_ = logging.getLogger('Hotels')
     logger_.setLevel(logging.DEBUG)
     # create file handler which logs even debug messages
-    path_conf = os.path.join(Conf()["TRIP_ADVISOR"]["log_dir"], "hotels.log")
+    path_conf = os.path.join(Conf().get_path("TRIP_ADVISOR", "log_dir"), "hotels.log")
 
     if not os.path.isfile(path=path_conf):
         # creates the file if it does not exist
@@ -63,7 +63,7 @@ def set_logger():
 def write_html_error(html_page):
     """Take an html and write it to the log directory."""
     now = datetime.now().strftime("%d-%m-%H:%M:%S")
-    path_log = Conf()["TRIP_ADVISOR"]["log_dir"]
+    path_log = Conf().get_path("TRIP_ADVISOR", "log_dir")
     path = os.path.join(path_log, f"error_{now}.html")
 
     with open(path, "w+") as f:
