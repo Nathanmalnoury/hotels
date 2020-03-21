@@ -42,7 +42,7 @@ class Scrapper:
         }
 
         if use_proxy:
-            proxy = ProxyPool.instance().get_proxy()
+            proxy = ProxyPool().get_proxy()
             parameters["proxies"] = {'http': proxy, 'https': proxy}
 
         self.page = requests.get(**parameters)

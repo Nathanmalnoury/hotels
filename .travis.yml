@@ -8,5 +8,5 @@ install:
   - mkdir saves
 # command to run tests
 script:
-  - pytest --pylama
+  - pylama ./hotels
   - pytest
