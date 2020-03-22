@@ -8,5 +8,6 @@ install:
   - mkdir saves
 # command to run tests
 script:
-  - pylama ./hotels
+  - pylama ./hotels ./tests
   - unittest
+  - pydocstyle ./hotels ./tests
