@@ -47,6 +47,7 @@ class Conf(object):
         return data
 
     def get_path(self, section, key):
+        """Read path in conf and make it absolute."""
         return os.path.join(self._get_root_path(), self.conf[section][key])
 
     def get(self, key, default=None):
