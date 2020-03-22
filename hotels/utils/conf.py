@@ -27,12 +27,12 @@ class Conf(object):
         Read conf file and store the default values in a dictionary.
 
         This only work if the conf file is in the root of the project folder !!
+
         :param filename: name of the conf fileDB
         :type filename: strConf
         :return: dict with the default values
         :rtype: dict
         """
-
         path = os.path.join(Conf()._get_root_path(), filename)
 
         if not os.path.isfile(path):

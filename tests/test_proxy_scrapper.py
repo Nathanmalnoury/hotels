@@ -49,7 +49,8 @@ class TestProxyScrapper(unittest.TestCase):
 
         mock_get.return_value.text = "hello"
 
-        a = test.get_proxies(True)
+        test.get_proxies(True)
+
         mock_get.assert_called_with(
             headers=test.headers, proxies={'http': "proxy", 'https': "proxy"}, url=url, timeout=20,
         )
