@@ -12,7 +12,6 @@ logger = logging.getLogger("Hotels")
 
 class WebDriverTripAdvisor:
     """WebDriver based on selenium."""
-
     currency_wanted_symbol = Conf()["TRIP_ADVISOR"]["currency_wanted_symbol"]
     currency_wanted_name = Conf()["TRIP_ADVISOR"]["currency_wanted_name"]
 
@@ -71,7 +70,7 @@ class WebDriverTripAdvisor:
         if headless:
             options.add_argument('--headless')
 
-        driver = webdriver.Chrome(chrome_options=options)
+        driver = webdriver.Chrome(options=options)
         driver.set_page_load_timeout(timeout)  # Wait 5 min before giving up on loading page
         driver.set_window_size(width=1700, height=500)  # makes sure the layout is the one supported by the parsers.
         return driver
@@ -240,6 +239,7 @@ class RedirectedError(Exception):
 
 class LandedOnErrorPageError(Exception):
     """Error to throw when driver lands on an error page."""
+
     def __init__(self, *args):
         if args:
             self.message = args[0]

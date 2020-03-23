@@ -134,12 +134,12 @@ class TripAdvisorScrapper(Scrapper):
 
         while next_url is not None:
             if not use_proxy:
-                next_url, elapsed_time, current_page, page_max = TripAdvisorScrapper.process_one_page(
+                hotels, next_url, elapsed_time, current_page, page_max = TripAdvisorScrapper.process_one_page(
                     next_url, headless, hotels, proxy=None, timeout=timeout)
             else:
                 while True:
                     try:
-                        next_url, elapsed_time, current_page, page_max = TripAdvisorScrapper.process_one_page(
+                        hotels, next_url, elapsed_time, current_page, page_max = TripAdvisorScrapper.process_one_page(
                             next_url, headless, hotels, proxy=proxy, timeout=timeout)
                         break
                     except Exception as e:
@@ -147,7 +147,6 @@ class TripAdvisorScrapper(Scrapper):
                         logger.exception(e)
                         ProxyPool().remove_proxy(proxy)
                         proxy = ProxyPool().get_proxy()
-
             times.append(elapsed_time)
             TripAdvisorScrapper.compute_eta(times, page_max)
             if next_url is None:
@@ -183,7 +182,6 @@ class TripAdvisorScrapper(Scrapper):
         found_hotels = scrapper.hotels_info()
         next_info = scrapper.get_page_info()
         elapsed_time = time.time() - start
-
         hotels += found_hotels
         current_page = next_info.get("current_page")
         page_max = next_info.get("total_page")
@@ -198,7 +196,7 @@ class TripAdvisorScrapper(Scrapper):
             f"Found {len(found_hotels)} hotels, {len(hotels)} in total."
         )
 
-        return next_url, elapsed_time, current_page, page_max
+        return hotels, next_url, elapsed_time, current_page, page_max
 
     @staticmethod
     def compute_eta(times, page_max):
