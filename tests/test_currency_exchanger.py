@@ -1,6 +1,5 @@
 import unittest
 
-from hotels import Conf
 from hotels.currency_exchanger import CurrencyExchanger
 from hotels.scrappers.scrapper import Scrapper
 from hotels.utils.misc import init

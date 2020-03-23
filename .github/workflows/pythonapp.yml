@@ -38,8 +38,8 @@ jobs:
 
       - name: Test with unittest
         run: |
-          coverage run -m unittest discover
+          coverage run --source="./hotels" -m unittest discover
 
-      - name: Test coverage above 70%
+      - name: Test coverage above 50%
         run: |
-          coverage report --omit='*/venv/*','*/__init__.py','*/tests/*' --fail-under=70
+          coverage report --omit='*/venv/*','*/__init__.py','*/tests/*' --fail-under=50

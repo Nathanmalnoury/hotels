@@ -50,7 +50,8 @@ class Scrapper:
                 try:
                     self.page = requests.get(**parameters)
                     break
-                except:
+                except Exception as e:
+                    logger.warning(e)
                     ProxyPool().remove_proxy(proxy)
                     continue
 
