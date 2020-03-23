@@ -46,6 +46,7 @@ class Scrapper:
         else:
             while True:
                 proxy = ProxyPool().get_proxy()
+                logger.debug(proxy)
                 parameters["proxies"] = {'http': proxy, 'https': proxy}
                 try:
                     self.page = requests.get(**parameters)
@@ -55,4 +56,5 @@ class Scrapper:
                     ProxyPool().remove_proxy(proxy)
                     continue
 
+        logger.debug("request made.")
         return self.page

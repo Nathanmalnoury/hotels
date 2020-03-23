@@ -103,6 +103,9 @@ class CurrencyExchanger:
         :rtype int
         """
         money_from = self.get_name_from_symbol(symb)
+        if money_from is None:
+            logger.warning(f"Unknown currency '{symb}'")
+            return None
         exchange_rate = self.get_exchange_rate(money_from=money_from, money_to=money_to, use_proxy=use_proxy)
         if exchange_rate is not None:
             return self.round(price * exchange_rate)
