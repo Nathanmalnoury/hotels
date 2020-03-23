@@ -41,10 +41,17 @@ class Scrapper:
             "headers": self.headers,
             "timeout": self.timeout,
         }
+        if not use_proxy:
+            self.page = requests.get(**parameters)
+        else:
+            while True:
+                proxy = ProxyPool().get_proxy()
+                parameters["proxies"] = {'http': proxy, 'https': proxy}
+                try:
+                    self.page = requests.get(**parameters)
+                    break
+                except:
+                    ProxyPool().remove_proxy(proxy)
+                    continue
 
-        if use_proxy:
-            proxy = ProxyPool().get_proxy()
-            parameters["proxies"] = {'http': proxy, 'https': proxy}
-
-        self.page = requests.get(**parameters)
         return self.page

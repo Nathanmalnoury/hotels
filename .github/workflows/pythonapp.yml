@@ -36,11 +36,10 @@ jobs:
         run: |
           pydocstyle ./hotels ./tests --ignore=D2,D107,D105
 
-
       - name: Test with unittest
         run: |
           coverage run -m unittest discover
 
       - name: Test coverage above 70%
-        run:|
+        run: |
           coverage report --omit='*/venv/*','*/__init__.py','*/tests/*' --fail-under=70
