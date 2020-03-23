@@ -12,13 +12,14 @@ import time
 
 from bs4 import BeautifulSoup
 
+from hotels.models.hotel import Hotel
 from hotels.parsers.hotel_parser import HotelParser
 from hotels.parsers.page_parser import PageParser
+from hotels.proxy_pool import ProxyPool
 from hotels.scrappers.scrapper import Scrapper
 from hotels.scrappers.web_driver import WebDriverTripAdvisor
 from hotels.utils.conf import Conf
 from hotels.utils.misc import write_html_error
-from hotels.models.hotel import Hotel
 
 logger = logging.getLogger("Hotels")
 
@@ -103,13 +104,16 @@ class TripAdvisorScrapper(Scrapper):
         return data
 
     @staticmethod
-    def crawler(first_url, data=None, headless=True):
+    def crawler(first_url, data=None, headless=True, use_proxy=True, timeout=300):
         """
         Crawls to all the next pages of a requested url.
 
         If first_url is the first page of the request, it crawls every hotels.
 
+        :param use_proxy: Whether or not to use proxy.
         :param first_url: url
+        :param timeout: timeout for loading the page.
+        :type timeout: int
         :type first_url:url
         :param data: optionnal already scrapped data, from an aborted previous scrap.
         :type data: dict
@@ -125,11 +129,25 @@ class TripAdvisorScrapper(Scrapper):
         next_url = first_url
         logger.debug("Crawling starts")
         times = []
+        if use_proxy:
+            proxy = ProxyPool().get_proxy()
 
         while next_url is not None:
-            next_url, elapsed_time, current_page, page_max = TripAdvisorScrapper.process_one_page(next_url,
-                                                                                                  headless,
-                                                                                                  hotels)
+            if not use_proxy:
+                next_url, elapsed_time, current_page, page_max = TripAdvisorScrapper.process_one_page(
+                    next_url, headless, hotels, proxy=None, timeout=timeout)
+            else:
+                while True:
+                    try:
+                        next_url, elapsed_time, current_page, page_max = TripAdvisorScrapper.process_one_page(
+                            next_url, headless, hotels, proxy=proxy, timeout=timeout)
+                        break
+                    except Exception as e:
+                        logger.debug(f"Get TripAdvisor page with proxy did not work: '{e.__class__}'")
+                        logger.exception(e)
+                        ProxyPool().remove_proxy(proxy)
+                        proxy = ProxyPool().get_proxy()
+
             times.append(elapsed_time)
             TripAdvisorScrapper.compute_eta(times, page_max)
             if next_url is None:
@@ -138,10 +156,13 @@ class TripAdvisorScrapper(Scrapper):
         return hotels
 
     @staticmethod
-    def process_one_page(url, headless, hotels):
+    def process_one_page(url, headless, hotels, proxy, timeout):
         """
         Get, Scrap and parse one page.
 
+        :param timeout: timeout
+        :type timeout:int
+        :param use_proxy: Whether or not to use proxy
         :param url: url to process.
         :type url: str
         :param headless: whether or not to show the browser to the user.
@@ -153,7 +174,12 @@ class TripAdvisorScrapper(Scrapper):
         scrapper = TripAdvisorScrapper(url, headless=headless)
 
         start = time.time()
-        scrapper.page = WebDriverTripAdvisor.get(url=scrapper.url, headless=scrapper.headless)
+
+        scrapper.page = WebDriverTripAdvisor.get(url=scrapper.url,
+                                                 headless=scrapper.headless,
+                                                 proxy=proxy,
+                                                 timeout=timeout)
+
         found_hotels = scrapper.hotels_info()
         next_info = scrapper.get_page_info()
         elapsed_time = time.time() - start
