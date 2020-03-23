@@ -1,3 +1,4 @@
+![TripAdvisor Scrapper](https://github.com/Nathanmalnoury/hotels/workflows/Python%20application/badge.svg)
 # Hotels 
 TripAdvisor's Hotels Scrapper for uk version of the site. This only works on city results, not on country results.
 
