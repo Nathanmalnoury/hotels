@@ -42,7 +42,7 @@ class PageParser:
             logger.info(href)
             href = href.split("\'")
             return href[1]
-        except:
+        except Exception:
             return None
 
     def get_current_page_number(self):

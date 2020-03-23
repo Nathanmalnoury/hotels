@@ -5,7 +5,6 @@ import time
 from selenium import webdriver
 
 from hotels import Conf
-from hotels.proxy_pool import ProxyPool
 from hotels.utils.misc import write_html_error
 
 logger = logging.getLogger("Hotels")
@@ -13,73 +12,66 @@ logger = logging.getLogger("Hotels")
 
 class WebDriverTripAdvisor:
     """WebDriver based on selenium."""
-
     currency_wanted_symbol = Conf()["TRIP_ADVISOR"]["currency_wanted_symbol"]
     currency_wanted_name = Conf()["TRIP_ADVISOR"]["currency_wanted_name"]
 
     @staticmethod
-    def get(url, headless=True):
+    def get(url, proxy, timeout, headless=True):
         """
         Get a TripAdvisor UK url.
 
         Executes a change in currency where needed, and waits for prices to charge.
         Verifies that the returned page is adequate to what the scrappers are expecting.
 
+        :param timeout: timeout
+        :param proxy: Proxy to use. None -> does not use proxy
+        :type proxy: None | str
         :param url: url
         :type url: str
         :param headless: whether to show the driver to the user or not.
         :type headless: bool
         :return: page
         """
-        while True:
-            proxy_pool = ProxyPool()
-            proxy = proxy_pool.get_proxy()
-            driver = WebDriverTripAdvisor._get_driver(proxy=proxy, headless=headless)
+        driver = WebDriverTripAdvisor._get_driver(proxy=proxy, headless=headless, timeout=timeout)
+
+        try:
+            s = time.time()
+            driver.get(url)
+            logger.debug(f"Get took {time.time() - s:.2f}s.")
+            time.sleep(5)
+            WebDriverTripAdvisor._handle_redirect(driver=driver)
+            WebDriverTripAdvisor._check_page(driver)
+            WebDriverTripAdvisor._change_currency(driver)
 
             try:
-                s = time.time()
-                driver.get(url)
-                logger.debug(f"Get took {time.time() - s:.2f}s.")
-                time.sleep(5)
-                WebDriverTripAdvisor._handle_redirect(driver=driver)
-
-                if not WebDriverTripAdvisor._check_page(driver):
-                    WebDriverTripAdvisor._close(driver, proxy)
-                    continue
-
-                WebDriverTripAdvisor._change_currency(driver)
-
-                try:
-                    WebDriverTripAdvisor._wait_prices(driver)
-                except TimeoutError:
-                    logger.info("Prices did not charge in timeout limit.")
-                    WebDriverTripAdvisor._close(driver, proxy)
-                    continue
-
-                if not WebDriverTripAdvisor._check_page(driver):
-                    WebDriverTripAdvisor._close(driver, proxy)
-                    continue
-
-                logger.debug(f"Request is a success, for page '{driver.current_url}'. Took {time.time() - s:.2f}s.")
-                page = driver.page_source
-
+                WebDriverTripAdvisor._wait_prices(driver)
+            except TimeoutError:
+                logger.info("Prices did not charge in timeout limit.")
                 driver.quit()
-                return page
 
-            except Exception as e:
-                logger.exception(e)
-                write_html_error(html_page=driver.page_source)
-                WebDriverTripAdvisor._close(driver, proxy)
+            WebDriverTripAdvisor._check_page(driver)
+            logger.debug(f"Request is a success, for page '{driver.current_url}'. Took {time.time() - s:.2f}s.")
+            page = driver.page_source
+
+            driver.quit()
+            return page
+
+        except Exception as e:
+            logger.exception(e)
+            write_html_error(html_page=driver.page_source)
+            driver.close()
 
     @staticmethod
-    def _get_driver(proxy, headless):
+    def _get_driver(proxy, headless, timeout):
         options = webdriver.ChromeOptions()
-        options.add_argument(f'--proxy-server={proxy}')
+        if proxy is not None:
+            options.add_argument(f'--proxy-server={proxy}')
+            logger.debug(f"using proxy: '{proxy}'")
         if headless:
             options.add_argument('--headless')
 
-        driver = webdriver.Chrome(chrome_options=options)
-        driver.set_page_load_timeout(300)  # Wait 5 min before giving up on loading page
+        driver = webdriver.Chrome(options=options)
+        driver.set_page_load_timeout(timeout)  # Wait 5 min before giving up on loading page
         driver.set_window_size(width=1700, height=500)  # makes sure the layout is the one supported by the parsers.
         return driver
 
@@ -178,16 +170,17 @@ class WebDriverTripAdvisor:
         :rtype: bool
         """
         if not driver.current_url.startswith("https://www.tripadvisor.co.uk/Hotels-"):
-            logger.warning(f"Driver redirected ; '{driver.current_url}'.")
             write_html_error(driver.page_source)
-            return False
+            driver.quit()
+            raise RedirectedError(f"redirected to {driver.current_url}")
         if WebDriverTripAdvisor._page_is_error(driver):
+            driver.quit()
             logger.warning("Driver landed on an error page.")
-            return False
+            raise LandedOnErrorPageError
         if WebDriverTripAdvisor._page_is_empty(driver):
+            driver.quit()
             logger.warning("Driver landed on an empty page.")
-            return False
-        return True
+            raise EmptyPageError
 
     @staticmethod
     def _page_is_error(driver):
@@ -211,7 +204,50 @@ class WebDriverTripAdvisor:
         else:
             return False
 
-    @staticmethod
-    def _close(driver, proxy):
-        driver.quit()
-        ProxyPool().remove_proxy(proxy)
+
+class EmptyPageError(Exception):
+    """Error to throw when the driver gets a empty page."""
+
+    def __init__(self, *args):
+        if args:
+            self.message = args[0]
+        else:
+            self.message = None
+
+    def __str__(self):
+        if self.message is not None:
+            return f"EmptyPageError, {self.message}"
+        else:
+            return "EmptyPageError has been raised"
+
+
+class RedirectedError(Exception):
+    """Error to throw the driver gets redirected."""
+
+    def __init__(self, *args):
+        if args:
+            self.message = args[0]
+        else:
+            self.message = None
+
+    def __str__(self):
+        if self.message is not None:
+            return f"RedirectedError, {self.message}"
+        else:
+            return "RedirectedError has been raised"
+
+
+class LandedOnErrorPageError(Exception):
+    """Error to throw when driver lands on an error page."""
+
+    def __init__(self, *args):
+        if args:
+            self.message = args[0]
+        else:
+            self.message = None
+
+    def __str__(self):
+        if self.message is not None:
+            return f"LandedOnErrorPageError, {self.message}"
+        else:
+            return "LandedOnErrorPageError has been raised"

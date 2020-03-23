@@ -3,12 +3,10 @@ import json
 import logging
 import math
 import os
-import random
 
 import pandas as pd
-import requests
 
-from hotels.proxy_pool import ProxyPool
+from hotels.scrappers.scrapper import Scrapper
 from hotels.utils.conf import Conf
 from hotels.utils.singleton import singleton
 
@@ -38,40 +36,19 @@ class CurrencyExchanger:
         self.exchange_rates = {}
 
         conf = Conf()
-        self.tokens = conf["CURRENCY_API"]["tokens"].split(",")
+        self.token = conf["CURRENCY_API"]["token"]
         self.base_url = conf["CURRENCY_API"]["base_url"]
 
-    def _query(self, arg):
-        proxy_pool = ProxyPool()
-        token = random.choice(self.tokens)
-        while True:
-            proxy = proxy_pool.get_proxy()
-            logger.debug(f"using proxy {proxy}")
-
-            try:
-                resp = requests.get(
-                    url=self.base_url + f"convert?q={arg}&compact=ultra&apiKey={token}",
-                    proxies={"http": proxy, "https": proxy},
-                    headers=self.headers,
-                    timeout=self.timeout)
-                logger.debug("Request to currency exchanger API is a success.")
-                if resp.ok:
-                    break
-                else:
-                    self.tokens.remove(token)
-                    token = random.choice(self.tokens)
-
-            except Exception as e:
-                logger.warning(f"Connection Error for proxy {proxy}")
-                logger.warning(e)
-                proxy_pool.remove_proxy(proxy)
+    def _query(self, arg, use_proxy):
+        url = self.base_url + f"convert?q={arg}&compact=ultra&apiKey={self.token}"
+        resp = Scrapper(url).simple_request(use_proxy=use_proxy)
 
         dict_ = json.loads(resp.text)
         for k, v in dict_.items():
             self.exchange_rates[k] = v
         logger.debug(f"Saved exchanged rates: {self.exchange_rates}")
 
-    def get_exchange_rate(self, money_from, money_to="EUR"):
+    def get_exchange_rate(self, money_from, money_to="EUR", use_proxy=True):
         """
         Get an exchange rate, requesting the API if needed.
 
@@ -79,6 +56,7 @@ class CurrencyExchanger:
         :type money_from: str
         :param money_to: code of the currency to get the price expressed in.
         :type money_to: str
+        :param use_proxy: True to use proxy, False otherwise
         :return: exchange rate
         :rtype: float
         """
@@ -88,7 +66,7 @@ class CurrencyExchanger:
         rate = self.exchange_rates.get(exchange)
         if rate is None:
             logger.warning(f"Unknown Exchange rate '{exchange}'. Requesting API")
-            self._query(exchange)
+            self._query(exchange, use_proxy=use_proxy)
 
         return self.exchange_rates.get(exchange, None)
 
@@ -109,11 +87,12 @@ class CurrencyExchanger:
         except IndexError:
             return None
 
-    def convert_price(self, price, symb, money_to="EUR"):
+    def convert_price(self, price, symb, money_to="EUR", use_proxy=True):
         """
         Convert a price into a given currency.
 
         Uses request when necessary.
+        :param use_proxy: True to use proxy, False otherwise
         :param price: amount to convert
         :type price: float or int
         :param symb: symbol of the currency in which the price is given.
@@ -124,7 +103,10 @@ class CurrencyExchanger:
         :rtype int
         """
         money_from = self.get_name_from_symbol(symb)
-        exchange_rate = self.get_exchange_rate(money_from=money_from, money_to=money_to)
+        if money_from is None:
+            logger.warning(f"Unknown currency '{symb}'")
+            return None
+        exchange_rate = self.get_exchange_rate(money_from=money_from, money_to=money_to, use_proxy=use_proxy)
         if exchange_rate is not None:
             return self.round(price * exchange_rate)
         else:
