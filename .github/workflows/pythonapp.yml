@@ -39,4 +39,8 @@ jobs:
 
       - name: Test with unittest
         run: |
-          python -m unittest
+          coverage run -m unittest discover
+
+      - name: Test coverage above 70%
+        run:|
+          coverage report --omit='*/venv/*','*/__init__.py','*/tests/*' --fail-under=70

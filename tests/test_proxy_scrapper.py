@@ -13,34 +13,18 @@ class TestProxyScrapper(unittest.TestCase):
         cls.proxy_scrapper.get_proxies(False)
 
     def test_request(self):
-        """
-        Test that a simple request (without proxy) works.
-
-        :param proxy_scrapper: ProxyScrapper
-        :type proxy_scrapper: ProxyScrapper
-        :return:
-        """
+        """Test that getting proxy is still working."""
         self.assertTrue(self.proxy_scrapper.list_proxies)  # not empty list is truthy
 
     def test_proxy_format(self):
-        """
-        Test that the proxy scrapped are correctly formatted.
-
-        :param proxy_scrapper: ProxyScrapper
-        :type proxy_scrapper: ProxyScrapper
-        :return:
-        """
+        """Test that the proxy scrapped are correctly formatted."""
         for prox in self.proxy_scrapper.list_proxies:
             proxy_re = re.compile(r'((\d{1,3})(\.|:)){4}\d+')
             self.assertTrue(proxy_re.search(prox).group() == prox)
 
     @mock.patch("hotels.scrappers.scrapper.requests.get")
     def test_request_with_proxy(self, mock_get):
-        """
-        :type mock_get: mock.MagickMock
-        :type proxy_scrapper: ProxyScrapper
-        :return:
-        """
+        """Test that a request with a proxy is working."""
         ProxyPool().get_proxy = mock.Mock()
         ProxyPool().get_proxy.return_value = "proxy"
 
