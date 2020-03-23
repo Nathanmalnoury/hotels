@@ -21,7 +21,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.test.txt
       - name: Create save and lof directories
-        - run: |
+        run: |
           mkdir .log
           mkdir saves
       - name: Lint with flake8
