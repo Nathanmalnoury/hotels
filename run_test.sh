@@ -1,7 +1,7 @@
 BASE_DIR=$(dirname "$0")
 cd "$BASE_DIR" || exit
 . ./venv/bin/activate
-pylama ./hotels ./tests
-python -m unittest
-pydocstyle ./hotels ./tests
+flake8 ./hotels ./tests --count --select=E9,F63,F7,F82 --show-source --statistics
+flake8 ./hotels ./tests --count --max-complexity=10 --max-line-length=127 --statistics
+pydocstyle ./hotels ./tests --ignore=D2,D107,D105
 deactivate

@@ -17,7 +17,7 @@ from hotels.parsers.hotel_parser import HotelParser
 from hotels.parsers.page_parser import PageParser
 from hotels.proxy_pool import ProxyPool
 from hotels.scrappers.scrapper import Scrapper
-from hotels.scrappers.web_driver import WebDriverTripAdvisor
+from hotels.scrappers.web_driver_tripadvisor import WebDriverTripAdvisor
 from hotels.utils.conf import Conf
 from hotels.utils.misc import write_html_error
 

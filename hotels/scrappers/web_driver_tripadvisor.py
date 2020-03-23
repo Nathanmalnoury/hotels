@@ -207,6 +207,8 @@ class WebDriverTripAdvisor:
 
 
 class EmptyPageError(Exception):
+    """Error to throw when the driver gets a empty page."""
+
     def __init__(self, *args):
         if args:
             self.message = args[0]
@@ -221,6 +223,7 @@ class EmptyPageError(Exception):
 
 
 class RedirectedError(Exception):
+    """Error to throw the driver gets redirected."""
 
     def __init__(self, *args):
         if args:
@@ -236,7 +239,7 @@ class RedirectedError(Exception):
 
 
 class LandedOnErrorPageError(Exception):
-
+    """Error to throw when driver lands on an error page."""
     def __init__(self, *args):
         if args:
             self.message = args[0]
