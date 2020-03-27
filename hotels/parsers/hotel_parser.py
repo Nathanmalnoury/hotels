@@ -30,8 +30,11 @@ class HotelParser:
         rating = self.get_rating()
         price, currency = self.get_price()
         detail_url = self.get_detail_url()
+        add_info = self.get_additional_info()
+        votes = self.get_votes()
 
-        return Hotel(name=name, rating=rating, price=price, currency=currency, detail_url=detail_url)
+        return Hotel(name=name, rating=rating, price=price, votes=votes,
+                     commodities=add_info, currency=currency, detail_url=detail_url)
 
     def get_hotel_name(self):
         """Parse name of an hotel from an hotel."""
@@ -54,6 +57,7 @@ class HotelParser:
             first_number = ratings[0][1:]  # matches on '"4.5', we have to remove "
             last_number = ratings[2]
             return f"{first_number}/{last_number}"
+
         except Exception:
             votes = self.get_votes()
             if votes is not None and votes == 0:
@@ -114,11 +118,34 @@ class HotelParser:
             count = tag.split("\n")
             count = count[1]
             count = count.split()
-            return int(count[0])
+            return int(self.clean_amount(count[0]))
 
-        except Exception:
+        except Exception as e:
             logger.warning("No review count found")
+            logger.warning(e)
             return None
+
+    def get_additional_info(self):
+        """Parse additional information, such as commodities and stars."""
+        commodities = []
+        matcher_commodities = re.compile(
+            r'<div class="prw_rup prw_common_hotel_icons_list linespace is-shown-at-tablet"[\w\W]*?</ul>'
+        )
+        try:
+            ul_commodities = matcher_commodities.search(self.str_hotel).group()
+            matcher = re.compile(r'<span class="text">[\w\W]*?</span>')
+            #            <span class="text">
+            #             Bar/Lounge
+            #            </span>
+            for match in matcher.findall(ul_commodities):
+                text = match.split("\n")[1]
+                commodities.append(text.strip())
+
+        except AttributeError:
+            logger.info("no match for commodities")
+            pass
+
+        return commodities
 
     def no_price_available(self):
         """Detect if a price is not available on TripAdvisor."""

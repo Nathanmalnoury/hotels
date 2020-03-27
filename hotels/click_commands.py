@@ -33,6 +33,7 @@ def scrapper():
 @click.option("--no-proxy", is_flag=True, default=False, help="Requests made on TripAdvisor wont use a proxy")
 def scrap(base_url, excel_path, timeout, show_browser, no_proxy):
     """Scrap a TripAdvisor page, get all pages available starting with the base-url."""
+    logger.warning(base_url + excel_path + "{}".format(timeout))
     check_args(base_url, excel_path)
     init()
     logger.info(f"Scrapping starts. Path to save excel: '{excel_path}'")
@@ -43,7 +44,7 @@ def scrap(base_url, excel_path, timeout, show_browser, no_proxy):
         use_proxy=not no_proxy,
         timeout=timeout
     )
-
+    logger.warning(hotels)
     save_as_excel(hotels, excel_path)
     end = time.time()
 
