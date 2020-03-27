@@ -21,7 +21,7 @@ class TestClickCommands(unittest.TestCase):
         crawler_mock.side_effect = [return_hotel]
 
         base_url = "https://www.tripadvisor.co.uk/Hotels-g298484-Moscow_Central_Russia-Hotels.html"
-        excel_path = "/home/nathan/Desktop/test.xlsx"
+        excel_path = "/test.xlsx"
         show_browser = False
         timeout = 123
         no_proxy = True
