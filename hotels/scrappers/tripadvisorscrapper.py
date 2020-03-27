@@ -76,10 +76,13 @@ class TripAdvisorScrapper(Scrapper):
         :return: None
         """
         path = os.path.join(TripAdvisorScrapper._get_save_dir(), f"save_page_{page}.json")
-        data["hotels"] = [h.__dict__ for h in data["hotels"]]
+        data["hotels"] = [h.to_dict() for h in data["hotels"]]
 
         with open(path, "w+") as f:
-            json.dump(data, f)
+            json.dump(
+                obj=data,
+                fp=f,
+                indent=2)
 
         logger.info(f"Saved data up until page {page}.")
 

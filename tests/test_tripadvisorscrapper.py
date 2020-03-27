@@ -2,13 +2,6 @@ import unittest
 from unittest import mock
 from unittest.mock import call
 
-from hotels.utils.conf import Conf
-
-# verify that money changes.
-NAME_TEST, SYMBOL_TEST = "ILS", "₪"
-Conf().conf["TRIP_ADVISOR"]["currency_wanted_symbol"] = SYMBOL_TEST
-Conf()["TRIP_ADVISOR"]["currency_wanted_name"] = NAME_TEST
-
 from hotels.scrappers.tripadvisorscrapper import TripAdvisorScrapper  # noqa
 
 URL = "https://www.tripadvisor.co.uk/Hotels-g187162-Nancy_Meurthe_et_Moselle_Grand_Est-Hotels.html"
@@ -39,7 +32,7 @@ class TestTripAdvisorScrapper(unittest.TestCase):
         for h in hotels:
             self.assertIsNotNone(h.detail_url)
             if h.price != "No price available":
-                self.assertEqual(h.currency, NAME_TEST)
+                self.assertEqual(h.currency, "GBP")
             else:
                 self.assertEqual(h.currency, " ")
 

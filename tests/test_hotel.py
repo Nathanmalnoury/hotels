@@ -6,14 +6,14 @@ from hotels.models.hotel import Hotel
 class TestHotel(unittest.TestCase):
     def test_from_json(self):
         hotels = [
-            Hotel("a", "b", 123, "£", "/detail1"),
-            Hotel("2a", "2b", 2123, "£", "/detail1"),
+            Hotel("a", "rating", "votes", 123, "£", ["comm1", "comm2"], "/detail1"),
+            Hotel("2a", "rating2", "votes2", 2123, "£", ["comm"], "/detail1"),
 
         ]
-        list_of_dict = [h.__dict__ for h in hotels]
+        list_of_dict = [h.to_dict() for h in hotels]
         list_hotels = Hotel.from_json(list_of_dict)
         for i, h in enumerate(list_hotels):
-            self.assertEqual(h.__dict__, hotels[i].__dict__)
+            self.assertEqual(h.to_dict(), hotels[i].to_dict())
 
 
 if __name__ == '__main__':

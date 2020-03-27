@@ -18,9 +18,9 @@ def save_as_excel(list_of_hotels, path_to_file):
     :type path_to_file: str
     :return: None
     """
-    list_of_dicts = [hotel.__dict__ for hotel in list_of_hotels]
+    list_of_dicts = [hotel.to_dict() for hotel in list_of_hotels]
     df = pd.DataFrame(list_of_dicts)
-    df.to_excel(path_to_file)
+    df.to_excel(path_to_file, index=False)
     logger.debug("Excel written")
 
 
@@ -38,6 +38,8 @@ def excel_to_hotels(path):
     for i, data in df.iterrows():
         name = data["name"] if not pd.isna(data["name"]) else None
         rating = data["rating"] if not pd.isna(data["rating"]) else None
+        votes = data["votes"] if not pd.isna(data["votes"]) else None
+        commodities = data["commodities"] if not pd.isna(data["commodities"]) else None
         price = data["price"] if not pd.isna(data["price"]) else None
         currency = data["currency"] if not pd.isna(data["currency"]) else None
         detail_url = data["detail_url"] if not pd.isna(data["detail_url"]) else None
@@ -46,8 +48,10 @@ def excel_to_hotels(path):
             Hotel(
                 name=name,
                 rating=rating,
+                votes=votes,
                 price=price,
                 currency=currency,
+                commodities=commodities,
                 detail_url=detail_url,
                 needs_root=False,
             )
